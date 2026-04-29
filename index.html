@@ -181,6 +181,14 @@
             try {
                 const r = await fetch(`${API_URL}/ads?server=${srv}&uid=${userId}`, {headers:{"ngrok-skip-browser-warning":"true"}});
                 const ads = await r.json();
+                
+                // ПРОВЕРКА НА БАН
+                if(ads.error === "BANNED") {
+                    tg.showAlert("Вы заблокированы администратором!");
+                    tg.close();
+                    return;
+                }
+    
                 let htmlOutput = '';
                 ads.forEach(ad => {
                     const isMod = (ad.user_id == userId || role === 2);
