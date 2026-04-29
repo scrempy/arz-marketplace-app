@@ -3,9 +3,8 @@ window.onerror = function(msg, url, lineNo, columnNo, error) {
     return false;
 };
 
-// --- КОНФИГУРАЦИЯ ---
 const OWNER_ID = 827979452;
-const API_URL = "https://old-shortly-grower.ngrok-free.dev/api"; // ТВОЙ АКТУАЛЬНЫЙ NGROK
+const API_URL = "https://old-shortly-grower.ngrok-free.dev/api"; // ТВОЙ NGROK
 let tg = window.Telegram.WebApp;
 tg.expand();
 
@@ -19,7 +18,6 @@ let curImg = null;
 let editingId = null;
 let globalTimers = { manualSec: 0, autoSec: 0, autoActive: false };
 
-// --- ФУНКЦИИ ИНТЕРФЕЙСА ---
 window.openMenu = () => { document.getElementById('drawer').classList.add('active'); document.getElementById('overlay').style.display='block'; };
 window.closeMenu = () => { document.getElementById('drawer').classList.remove('active'); document.getElementById('overlay').style.display='none'; };
 
@@ -31,14 +29,29 @@ window.showPage = (id) => {
 };
 
 window.openSrv = () => document.getElementById('srv-modal').style.display = 'block';
-
 window.selectSrv = (s) => {
     document.getElementById('current-srv-name').innerText = s;
     document.getElementById('srv-modal').style.display = 'none';
     loadFeed(s);
 };
 
-// --- СИНХРОНИЗАЦИЯ С СЕРВЕРОМ ---
+window.updateRoleBadge = (uid, role) => {
+    const b = document.getElementById('role-badge');
+    if (!b) return;
+    if (uid === OWNER_ID) { 
+        b.innerText = "Основатель"; b.style.background = "#ff0055"; b.style.color = "#fff"; b.style.boxShadow = "0 0 10px rgba(255,0,85,0.5)";
+    }
+    else if (role === 2) { 
+        b.innerText = "Админ"; b.style.background = "#00ff88"; b.style.color = "#000"; b.style.boxShadow = "0 0 10px rgba(0,255,136,0.3)";
+    }
+    else if (role === 1) { 
+        b.innerText = "Premium"; b.style.background = "#ffd700"; b.style.color = "#000"; b.style.boxShadow = "0 0 10px rgba(255,215,0,0.3)";
+    }
+    else { 
+        b.innerText = "Игрок"; b.style.background = "#251d3a"; b.style.color = "#a0a0c0"; b.style.boxShadow = "none";
+    }
+};
+
 window.fetchUserStatus = async function() {
     if (!userId) return;
     try {
@@ -66,7 +79,7 @@ window.fetchUserStatus = async function() {
 
 window.loadFeed = async function(srv) {
     const feed = document.getElementById('home-feed');
-    feed.innerHTML = '<center style="margin-top:20px; color:#555">Загрузка объявлений...</center>';
+    feed.innerHTML = '<center style="padding:40px; color:#555">Загрузка ленты...</center>';
     try {
         const r = await fetch(`${API_URL}/ads?server=${srv}&uid=${userId}`, { headers: { "ngrok-skip-browser-warning": "true" } });
         const ads = await r.json();
@@ -80,7 +93,7 @@ window.loadFeed = async function(srv) {
             
             let cardClass = isPremiumPost ? 'premium-ad' : '';
             let badge = isOwnerPost ? '<span class="owner-badge">👑 ОСНОВАТЕЛЬ</span>' : 
-                        (isPremiumPost ? '<span style="color:var(--prem); font-size:11px; font-weight:bold;">💎 PREMIUM</span>' : '');
+                        (isPremiumPost ? '<span style="color:#ffd700; font-size:11px; font-weight:900;">💎 PREMIUM</span>' : '');
 
             htmlOutput += `
             <div class="ad-card ${cardClass}" id="ad-${ad.id}">
@@ -94,30 +107,19 @@ window.loadFeed = async function(srv) {
                 </div>` : ''}
             </div>`;
         });
-        feed.innerHTML = htmlOutput || '<center style="margin-top:20px; color:#555">Объявлений пока нет</center>';
-    } catch (e) { feed.innerHTML = '<center style="color:red; margin-top:20px">Ошибка связи с сервером</center>'; }
+        feed.innerHTML = htmlOutput || '<center style="padding:40px; color:#555">Объявлений пока нет</center>';
+    } catch (e) { feed.innerHTML = '<center style="color:#ff4466; padding:40px">Ошибка связи с сервером</center>'; }
 };
 
-window.updateRoleBadge = (uid, role) => {
-    const b = document.getElementById('role-badge');
-    if (!b) return;
-    if (uid === OWNER_ID) { b.innerText = "Основатель"; b.style.background = "#ff0055"; }
-    else if (role === 2) { b.innerText = "Админ"; b.style.background = "#00ff88"; b.style.color = "#000"; }
-    else if (role === 1) { b.innerText = "Premium"; b.style.background = "#ffd700"; b.style.color = "#000"; }
-    else { b.innerText = "Игрок"; b.style.background = "#3d3159"; b.style.color = "#ccc"; }
-};
-
-// --- ДЕЙСТВИЯ ---
 window.submitCreate = async function() {
-    if (globalTimers.manualSec > 0 && userId !== OWNER_ID) return tg.showAlert("Подождите КД!");
+    if (globalTimers.manualSec > 0 && userId !== OWNER_ID) return tg.showAlert("Ожидайте КД!");
     const t = document.getElementById('f-txt').value;
-    if (t.length < 5) return tg.showAlert("Опишите товар!");
-    
+    if (t.length < 5) return tg.showAlert("Слишком короткий текст!");
     const res = await fetch(`${API_URL}/create`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: userId, server: document.getElementById('f-srv').value, text: t, photo: curImg, role: currentRole })
     });
-    if (res.ok) { tg.showAlert("✅ Опубликовано!"); showPage('home'); loadFeed('Все'); }
+    if (res.ok) { tg.showAlert("Опубликовано!"); showPage('home'); loadFeed('Все'); }
     else { const d = await res.json(); tg.showAlert(d.error); }
 };
 
@@ -125,14 +127,13 @@ window.deleteAd = (id) => {
     tg.showConfirm("Удалить это объявление?", async (c) => {
         if (c) {
             await fetch(`${API_URL}/delete`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: id, user_id: userId, role: currentRole }) });
-            document.getElementById(`ad-${id}`).remove();
+            const el = document.getElementById(`ad-${id}`); if(el) el.remove();
         }
     });
 };
 
 window.openEdit = (ad) => {
-    editingId = ad.id; 
-    document.getElementById('e-txt').value = ad.text;
+    editingId = ad.id; document.getElementById('e-txt').value = ad.text;
     document.getElementById('e-srv').value = ad.server;
     document.getElementById('edit-modal').style.display = 'block';
 };
@@ -148,15 +149,14 @@ document.getElementById('e-save-btn').onclick = async () => {
 
 window.saveAutoPR = async (active) => {
     const i = parseInt(document.getElementById('a-int').value);
-    if (i < 30 && userId !== OWNER_ID) return tg.showAlert("Мин. интервал 30 мин!");
+    if (i < 30 && userId !== OWNER_ID) return tg.showAlert("Минимум 30 минут!");
     await fetch(`${API_URL}/auto-pr/save`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: userId, text: document.getElementById('a-txt').value, photo: curImg, interval: i, active: active })
     });
-    tg.showAlert(active ? "🚀 Запущено!" : "⏸ Остановлено!"); fetchUserStatus();
+    tg.showAlert(active ? "Запущено!" : "Остановлено!"); fetchUserStatus();
 };
 
-// --- ИНИЦИАЛИЗАЦИЯ ---
 const srvs = ["Vice-City", "Phoenix", "Tucson", "Scottdale", "Chandler", "Brainburg", "Saint Rose", "Mesa", "Red-Rock", "Yuma", "Surprise", "Prescott", "Glendale", "Kingman", "Winslow", "Payson", "Gilbert", "Show-Low", "Casa-Grande", "Page", "Sun-City", "Queen-Creek", "Sedona", "Holiday", "Christmas", "Faraway", "Bumble Bee", "Mirage", "Love", "Drake"];
 srvs.forEach(s => {
     document.getElementById('f-srv').appendChild(new Option(s, s));
@@ -171,7 +171,7 @@ const setupFile = (i, p) => {
         const r = new FileReader(); r.onload = (ev) => {
             curImg = ev.target.result; 
             document.getElementById(p).style.backgroundImage = `url(${curImg})`;
-            document.getElementById(p).innerHTML = "";
+            document.getElementById(p).classList.add('has-photo');
         }; r.readAsDataURL(f);
     };
 };
@@ -185,18 +185,14 @@ setInterval(() => {
         globalTimers.manualSec--;
         btn.innerText = `ОЖИДАЙТЕ (${globalTimers.manualSec}с)`;
         btn.disabled = true;
-    } else if (btn.disabled) {
-        btn.innerText = "ОПУБЛИКОВАТЬ";
-        btn.disabled = false;
+    } else if (btn && btn.disabled) {
+        btn.innerText = "ОПУБЛИКОВАТЬ"; btn.disabled = false;
     }
     if (globalTimers.autoActive && globalTimers.autoSec > 0) {
         globalTimers.autoSec--;
-        document.getElementById('auto-status').innerText = `✅ ВКЛЮЧЕН (Пост через: ${globalTimers.autoSec}с)`;
+        const st = document.getElementById('auto-status');
+        if(st) st.innerText = `✅ ПОСТ ЧЕРЕЗ: ${globalTimers.autoSec}с`;
     }
 }, 1000);
 
-// Старт
-window.onload = () => {
-    fetchUserStatus();
-    loadFeed('Все');
-};
+window.onload = () => { fetchUserStatus(); loadFeed('Все'); };
