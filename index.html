@@ -73,15 +73,18 @@
 </div>
 
 <div id="edit-modal" class="modal">
-    <h2>РЕДАКТИРОВАНИЕ</h2>
-    <input type="file" id="edit-file-input" accept="image/*" style="display: none;">
-    <div class="srv-picker-btn" id="edit-photo-preview" onclick="document.getElementById('edit-file-input').click()" style="height:100px; border-style:dashed">
-        <span>📷 ИЗМЕНИТЬ ФОТО</span>
+    <div class="modal-body">
+        <h2 style="color:var(--primary)">РЕДАКТИРОВАНИЕ</h2>
+        <input type="file" id="edit-file-input" accept="image/*" style="display: none;">
+        <div class="srv-picker-btn" id="edit-photo-preview" onclick="document.getElementById('edit-file-input').click()" style="height:100px; border-style:dashed">
+            <span>📷 ИЗМЕНИТЬ ФОТО</span>
+        </div>
+        <select id="e-srv" class="styled-input"></select>
+        <textarea id="e-txt" class="styled-input" rows="6"></textarea>
+        <!-- ВАЖНО: onclick="window.saveEdit()" -->
+        <button class="btn-primary" onclick="window.saveEdit()">СОХРАНИТЬ</button>
+        <button class="btn-edit" style="width:100%; margin-top:10px" onclick="window.closeEdit()">ОТМЕНА</button>
     </div>
-    <select id="e-srv" class="styled-input"></select>
-    <textarea id="e-txt" class="styled-input" rows="6"></textarea>
-    <button class="btn-primary" id="e-save-btn">СОХРАНИТЬ</button>
-    <button class="btn-edit" style="width:100%; margin-top:10px" onclick="closeEdit()">ОТМЕНА</button>
 </div>
 
 <div id="srv-modal" class="modal">
@@ -92,6 +95,6 @@
     <button class="btn-primary" style="margin-top:20px" onclick="document.getElementById('srv-modal').style.display='none'">ЗАКРЫТЬ</button>
 </div>
 
-<script src="app.js?v=60"></script>
+<script src="app.js?v=70"></script>
 </body>
 </html>
