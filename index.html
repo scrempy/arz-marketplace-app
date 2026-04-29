@@ -205,8 +205,9 @@
                 });
                 document.getElementById('home-feed').innerHTML = html;
             } catch(e) {
-                console.error(e);
-                document.getElementById('home-feed').innerHTML = '<div style="text-align: center; color: #ff4444; margin-top: 50px;">❌ Ошибка подключения к боту. Убедитесь что сервер включен.</div>';
+                // ТЕПЕРЬ ОШИБКА ВЫВЕДЕТСЯ ПРЯМО НА ЭКРАН ТЕЛЕФОНА!
+                tg.showAlert("Техническая инфа: " + e.message); 
+                document.getElementById('home-feed').innerHTML = '<div style="text-align: center; color: #ff4444; margin-top: 50px;">❌ Ошибка: ' + e.message + '</div>';
             }
         }
 
