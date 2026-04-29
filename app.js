@@ -16,17 +16,25 @@ try {
         userId = tg.initDataUnsafe.user.id;
     }
 
-    let userName = tg.initDataUnsafe?.user?.username 
-        ? "@" + tg.initDataUnsafe.user.username 
-        : (tg.initDataUnsafe?.user?.first_name || "Загрузка...");
-
+    let userName = "Загрузка...";
+    
     const OWNER_ID = 827979452;
-
-    // ВНИМАНИЕ: СЮДА НУЖНО ВСТАВЛЯТЬ АКТУАЛЬНЫЙ NGROK
     const API_URL = "https://old-shortly-grower.ngrok-free.dev/api"; 
-
-    document.getElementById('user-display-name').innerText = userName;
-
+    
+    // ФУНКЦИЯ ОБНОВЛЕНИЯ ИМЕНИ В ИНТЕРФЕЙСЕ
+    function updateInterfaceName(name) {
+        if(name) {
+            userName = name;
+            const displayElem = document.getElementById('user-display-name');
+            if(displayElem) displayElem.innerText = userName;
+        }
+    }
+    
+    // СРАЗУ ЗАПУСКАЕМ ПРОВЕРКУ СТАТУСА ПРИ ОТКРЫТИИ
+    if(userId) {
+        fetchUserStatus();
+    }
+    
     if(userId === OWNER_ID) {
         document.getElementById('role-badge').innerText = "Основатель";
         document.getElementById('role-badge').style.background = "#ff0055"; 
@@ -34,21 +42,6 @@ try {
         document.getElementById('role-badge').innerText = (role === 2 ? "Админ" : "Premium");
         document.getElementById('role-badge').style.background = (role === 2 ? "#00ff88" : "#ffd700");
     }
-
-    const srvs = ["Vice-City","Phoenix","Tucson","Scottdale","Chandler","Brainburg","Saint Rose","Mesa","Red-Rock","Yuma","Surprise","Prescott","Glendale","Kingman","Winslow","Payson","Gilbert","Show-Low","Casa-Grande","Page","Sun-City","Queen-Creek","Sedona","Holiday","Christmas","Faraway","Bumble Bee","Mirage","Love","Drake"];
-    const fSrv = document.getElementById('f-srv');
-    const eSrv = document.getElementById('e-srv');
-    const sGrid = document.getElementById('srv-grid');
-
-    srvs.forEach(s => {
-        fSrv.appendChild(new Option(s, s));
-        eSrv.appendChild(new Option(s, s));
-        let d = document.createElement('div'); 
-        d.className='srv-item'; 
-        d.innerText=s; 
-        d.onclick=()=>selectSrv(s); 
-        sGrid.appendChild(d);
-    });
 
     window.openMenu = function() { document.getElementById('drawer').classList.add('active'); document.getElementById('overlay').style.display='block'; }
     window.closeMenu = function() { document.getElementById('drawer').classList.remove('active'); document.getElementById('overlay').style.display='none'; }
