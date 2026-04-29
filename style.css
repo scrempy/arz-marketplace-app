@@ -40,18 +40,85 @@ select, textarea, input { width: 100%; background: #2a213d; border: 1px solid #3
 .srv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
 .srv-item { background: var(--card); padding: 12px; text-align: center; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; border: 1px solid #3d3159; }
 
-/* ВЫДЕЛЕНИЕ ПРЕМИУМ ОБЪЯВЛЕНИЙ */
+/* РОСКОШНЫЙ ДИЗАЙН ПРЕМИУМ-КАРТОЧКИ */
 .premium-ad {
-    border: 2px solid var(--prem) !important;
-    box-shadow: 0 0 15px rgba(255, 215, 0, 0.15);
+    background: linear-gradient(145deg, #1f1833, #251d3a) !important;
+    border: none !important;
     position: relative;
-    overflow: hidden;
+    padding: 16px;
+    margin-bottom: 25px;
+    /* Мягкое золотое свечение вокруг всей карточки */
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.1), 0 0 40px rgba(255, 215, 0, 0.05) !important;
+    border-radius: 15px;
+    z-index: 1;
 }
 
-/* Маленький блик сверху для премиума */
+/* АНИМИРОВАННАЯ ЗОЛОТАЯ РАМКА */
 .premium-ad::before {
     content: '';
     position: absolute;
-    top: 0; left: 0; right: 0; height: 2px;
-    background: linear-gradient(90deg, transparent, var(--prem), transparent);
+    top: -2px; left: -2px; right: -2px; bottom: -2px;
+    background: linear-gradient(45deg, #ffd700, #ffae00, #fff3b0, #ffae00, #ffd700);
+    background-size: 400%;
+    z-index: -1;
+    border-radius: 17px;
+    animation: goldFlow 8s linear infinite;
+}
+
+/* ЭФФЕКТ СТЕКЛЯННОГО БЛЕСКА (БЛИК) */
+.premium-ad::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+        to right, 
+        transparent, 
+        rgba(255, 255, 255, 0.1), 
+        transparent
+    );
+    transform: skewX(-25deg);
+    transition: 0s;
+    animation: goldShine 4s infinite;
+}
+
+/* КРАСИВЫЙ ТЕГ СЕРВЕРА ДЛЯ ПРЕМИУМА */
+.premium-ad .status-tag {
+    background: linear-gradient(90deg, #ffae00, #ffd700) !important;
+    color: #000 !important;
+    font-weight: 900;
+    box-shadow: 0 0 10px rgba(255, 174, 0, 0.5);
+}
+
+/* ЮЗЕРНЕЙМ В ПРЕМИУМЕ */
+.premium-ad .ad-user {
+    color: #ffd700 !important;
+    font-size: 15px;
+    text-shadow: 0 0 5px rgba(255, 215, 0, 0.3);
+}
+
+/* АНИМАЦИИ */
+@keyframes goldFlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+@keyframes goldShine {
+    0% { left: -100%; }
+    20% { left: 150%; }
+    100% { left: 150%; }
+}
+
+/* ОСОБАЯ ПЛАШКА "ОСНОВАТЕЛЬ" В ОБЪЯВЛЕНИИ */
+.owner-badge {
+    background: linear-gradient(90deg, #ff0055, #ff4d00) !important;
+    color: white !important;
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+    box-shadow: 0 0 10px rgba(255, 0, 85, 0.5);
 }
