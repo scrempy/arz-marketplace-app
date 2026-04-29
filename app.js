@@ -157,16 +157,26 @@ try {
 
             let htmlOutput = '';
             ads.forEach(ad => {
-                const isOwner = (userId > 0 && ad.user_id == userId);
-                const isAdmin = (role === 2 || userId === OWNER_ID);
-                const isMod = isOwner || isAdmin;
+                const isOwnerPost = (ad.user_id === OWNER_ID);
+                const isPremiumPost = (ad.is_premium === 1 || isOwnerPost);
                 
-                const isPremium = (ad.is_premium || ad.user_id === OWNER_ID);
-                const premClass = isPremium ? 'premium-ad' : '';
-                const badge = isPremium ? '<span style="color:var(--prem); font-size:11px; font-weight:bold;">💎 PREMIUM</span>' : '';
+                const isMyPost = (userId > 0 && ad.user_id == userId);
+                const isAdmin = (role === 2 || userId === OWNER_ID);
+                const isMod = isMyPost || isAdmin;
+                
+                // Классы для стилизации
+                let cardClass = isPremiumPost ? 'premium-ad' : '';
+                
+                // Бейджики (Корона для Основателя, Бриллиант для Премиума)
+                let badge = '';
+                if (isOwnerPost) {
+                    badge = '<span class="owner-badge">👑 ОСНОВАТЕЛЬ</span>';
+                } else if (isPremiumPost) {
+                    badge = '<span style="color:var(--prem); font-size:11px; font-weight:bold;">💎 PREMIUM</span>';
+                }
                 
                 htmlOutput += `
-                <div class="ad-card ${premClass}" id="ad-${ad.id}">
+                <div class="ad-card ${cardClass}" id="ad-${ad.id}">
                     <div class="ad-header">
                         <span class="status-tag">${ad.server}</span>
                         ${badge}
