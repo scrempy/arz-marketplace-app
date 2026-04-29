@@ -192,12 +192,21 @@
                 let htmlOutput = '';
                 ads.forEach(ad => {
                     const canMod = (ad.user_id == userId || role === 2);
+                    
+                    // ЛОГИКА ОТОБРАЖЕНИЯ ПЛАШКИ (Премиум или Админ)
+                    // Если роль 2 (Админ) или is_premium = 1, показываем плашку
+                    let badge = '';
+                    if (ad.is_premium || ad.user_id == 827979452) { // 827979452 - твой ID, на всякий случай
+                        badge = '<span style="color:var(--prem); font-size:12px; font-weight:bold;">💎 PREMIUM</span>';
+                    }
+        
                     htmlOutput += `
                     <div class="ad-card" id="ad-${ad.id}">
                         <div class="ad-header">
                             <span class="status-tag">${ad.server}</span>
-                            <span class="ad-user">${ad.username}</span>
+                            ${badge} 
                         </div>
+                        <div class="ad-user">👤 ${ad.username}</div>
                         <div class="ad-text">${ad.text}</div>
                         ${ad.photo ? `<img src="${ad.photo}" class="ad-img">` : ''}
                         ${canMod ? `
