@@ -4,10 +4,10 @@ tg.expand();
 const urlParams = new URLSearchParams(window.location.search);
 const role = parseInt(urlParams.get('role') || '0');
 
-const user = tg.initDataUnsafe.user;
-const userId = user?.id || 0;
-// Начальное имя, пока сервер не ответил
-let userName = user?.username ? "@" + user.username : (user?.first_name || "Пользователь");
+// СТРОГАЯ ПРОВЕРКА ПОЛЬЗОВАТЕЛЯ ИЗ TELEGRAM
+const user = tg.initDataUnsafe?.user;
+const userId = user?.id || null; // Теперь null, а не 0, чтобы избежать бага с чужими объявлениями
+let userName = user?.username ? "@" + user.username : (user?.first_name || "Аноним");
 
 // ВНИМАНИЕ: СЮДА НУЖНО ВСТАВЛЯТЬ АКТУАЛЬНЫЙ NGROK ПРИ ПЕРЕЗАПУСКЕ
 const API_URL = "https://old-shortly-grower.ngrok-free.dev/api"; 
@@ -96,6 +96,7 @@ setInterval(() => {
 }, 1000);
 
 async function fetchUserStatus() {
+    if (!userId) return; // Не делаем запрос, если нет ID
     try {
         const r = await fetch(`${API_URL}/user-status?uid=${userId}`, {headers:{"ngrok-skip-browser-warning":"true"}});
         if (!r.ok) return;
@@ -104,12 +105,6 @@ async function fetchUserStatus() {
         globalTimers.manualSec = data.manual_cd;
         globalTimers.autoActive = data.auto.active;
         globalTimers.autoSec = data.auto.next_run_sec;
-        
-        // ОБНОВЛЯЕМ ЮЗЕРНЕЙМ ИЗ БАЗЫ БОТА
-        if(data.username) {
-            userName = data.username;
-            document.getElementById('user-display-name').innerText = userName;
-        }
         
         if(document.getElementById('a-txt') && data.auto.text && !document.getElementById('a-txt').value) {
             document.getElementById('a-txt').value = data.auto.text;
@@ -140,7 +135,14 @@ async function loadFeed(srv) {
 
         let htmlOutput = '';
         ads.forEach(ad => {
-            const isMod = (ad.user_id == userId || role === 2);
+            // ИСПРАВЛЕНА ЛОГИКА КНОПОК РЕДАКТИРОВАНИЯ
+            // 1. Если это твое объявление (твой ID совпадает с ID создателя)
+            const isOwner = (userId !== null && ad.user_id == userId);
+            // 2. Если ты Админ
+            const isAdmin = (role === 2);
+            // Показываем кнопки, если ты владелец ИЛИ админ
+            const isMod = isOwner || isAdmin;
+            
             const badge = (ad.is_premium || ad.user_id == 827979452) ? '<span style="color:var(--prem); font-size:11px; font-weight:bold;">💎 PREMIUM</span>' : '';
             
             htmlOutput += `
@@ -164,6 +166,7 @@ async function loadFeed(srv) {
 }
 
 async function submitCreate() {
+    if (!userId) return tg.showAlert("Ошибка: Откройте приложение через Telegram!");
     if(globalTimers.manualSec > 0) return tg.showAlert(`КД! Подождите еще ${formatTime(globalTimers.manualSec)}`);
     
     const t = document.getElementById('f-txt').value;
@@ -253,6 +256,7 @@ async function openAutoPR() {
 }
 
 async function saveAutoPR(active) {
+    if (!userId) return tg.showAlert("Ошибка: Откройте приложение через Telegram!");
     const i = parseInt(document.getElementById('a-int').value);
     if(i < 30) return tg.showAlert("Мин. интервал 30 мин!");
     
