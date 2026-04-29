@@ -12,15 +12,40 @@
 <div class="overlay" id="overlay" onclick="closeMenu()"></div>
 
 <div class="drawer" id="drawer">
-    <div style="margin-bottom: 30px;">
-        <div id="user-display-name" style="font-size: 18px; font-weight: 800; color: var(--primary);">Загрузка...</div>
-        <div id="role-badge" class="status-tag">Игрок</div>
+    <!-- Блок профиля -->
+    <div class="drawer-profile">
+        <div class="user-avatar" id="user-initials">?</div>
+        <div class="user-info">
+            <div id="user-display-name" class="user-name">Загрузка...</div>
+            <div id="role-badge" class="role-tag">Игрок</div>
+        </div>
     </div>
-    <div class="menu-item" onclick="showPage('home'); loadFeed('Все')">🏠 Главная доска</div>
-    <div class="menu-item" onclick="showPage('create')">✍️ Подать объявление</div>
-    <div class="menu-item" onclick="showPage('home'); loadFeed('Мои')">📁 Мои объявления</div>
-    <div class="menu-item" onclick="openAutoPR()">🚀 Авто-пиар</div>
-    <div class="menu-item" style="margin-top: 30px; border: 1px solid #3d3159" onclick="tg.close()">🔙 Выход</div>
+
+    <!-- Разделитель -->
+    <div class="drawer-divider">НАВИГАЦИЯ</div>
+
+    <!-- Пункты меню -->
+    <div class="menu-list">
+        <div class="menu-item" onclick="showPage('home'); loadFeed('Все')">
+            <span class="menu-icon">🏠</span> Главная доска
+        </div>
+        <div class="menu-item" onclick="showPage('create')">
+            <span class="menu-icon">✍️</span> Подать объявление
+        </div>
+        <div class="menu-item" onclick="showPage('home'); loadFeed('Мои')">
+            <span class="menu-icon">📁</span> Мои объявления
+        </div>
+        <div class="menu-item" onclick="openAutoPR()">
+            <span class="menu-icon">🚀</span> Авто-пиар
+        </div>
+    </div>
+
+    <!-- Нижняя часть -->
+    <div class="drawer-footer">
+        <div class="menu-item exit-btn" onclick="tg.close()">
+            <span class="menu-icon">🔙</span> Выход
+        </div>
+    </div>
 </div>
 
 <div class="header">
