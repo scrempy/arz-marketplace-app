@@ -192,26 +192,41 @@
                         'Accept': 'application/json'
                     }
                 });
-
+        
                 if (!response.ok) {
-                    throw new Error('Код ошибки: ' + response.status); // Выведет 400, 403 и т.д.
+                    throw new Error('Код ошибки: ' + response.status);
                 }
-
+        
                 const ads = await response.json();
-                // ... (дальше твой код отрисовки карточек html += ...)
+                
+                let htmlOutput = ''; // ОБЪЯВЛЯЕМ ПЕРЕМЕННУЮ (исправлено)
+        
+                ads.forEach(ad => {
+                    const isOwnerOrAdmin = (ad.user_id == userId || role === 2);
+                    htmlOutput += `
+                    <div class="ad-card" id="ad-${ad.id}">
+                        <div class="ad-header">
+                            <span class="status-tag" style="margin:0;">${ad.server}</span>
+                            ${ad.is_premium ? '<span style="color:var(--prem); font-size:12px; font-weight:bold;">💎 PREMIUM</span>' : ''}
+                        </div>
+                        <div class="ad-user">👤 ${ad.username}</div>
+                        <div class="ad-text" style="margin-top:10px;">${ad.text}</div>
+                        ${ad.photo ? `<img src="${ad.photo}" class="ad-img" style="margin-top:10px;">` : ''}
+                        ${isOwnerOrAdmin ? `<button class="delete-btn" onclick="deleteAd(${ad.id})">🗑 Удалить</button>` : ''}
+                    </div>`;
+                });
                 
                 if(ads.length === 0) {
                     feedDiv.innerHTML = '<div style="text-align: center; color: var(--hint); margin-top: 50px;">📭 Объявлений пока нет.</div>';
                 } else {
-                    feedDiv.innerHTML = html;
+                    feedDiv.innerHTML = htmlOutput; // ВЫВОДИМ РЕЗУЛЬТАТ (исправлено)
                 }
-
+        
             } catch(e) {
-                tg.showAlert("Критическая ошибка: " + e.message);
-                feedDiv.innerHTML = '<div style="text-align: center; color: #ff4444; margin-top: 50px;">❌ ' + e.message + '</div>';
+                console.error(e);
+                feedDiv.innerHTML = '<div style="text-align: center; color: #ff4444; margin-top: 50px;">❌ Ошибка: ' + e.message + '</div>';
             }
         }
-
         // --- ЛОГИКА ОТПРАВКИ ОБЪЯВЛЕНИЯ В БОТА ---
         async function submitCreate() {
             let t = document.getElementById('f-txt').value;
