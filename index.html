@@ -173,41 +173,34 @@
 
         // --- ЛОГИКА ЗАГРУЗКИ ЛЕНТЫ ИЗ БАЗЫ БОТА ---
         async function loadFeed(serverFilter) {
-            document.getElementById('home-feed').innerHTML = '<div style="text-align: center; color: var(--hint); margin-top: 50px;">Загрузка...</div>';
+            const feedDiv = document.getElementById('home-feed');
+            feedDiv.innerHTML = '<div style="text-align: center; color: var(--hint); margin-top: 50px;">Загрузка...</div>';
+            
             try {
                 const response = await fetch(`${API_URL}/ads?server=${serverFilter}&uid=${userId}`, {
                     method: 'GET',
                     headers: {
-                        "ngrok-skip-browser-warning": "69420" // МАГИЧЕСКАЯ СТРОЧКА: Отключает экран предупреждения Ngrok
+                        'ngrok-skip-browser-warning': 'true',
+                        'Accept': 'application/json'
                     }
                 });
-                const ads = await response.json();
-                
-                if(ads.length === 0) {
-                    document.getElementById('home-feed').innerHTML = '<div style="text-align: center; color: var(--hint); margin-top: 50px;">📭 Объявлений пока нет.</div>';
-                    return;
+
+                if (!response.ok) {
+                    throw new Error('Код ошибки: ' + response.status); // Выведет 400, 403 и т.д.
                 }
 
-                let html = '';
-                ads.forEach(ad => {
-                    const isOwnerOrAdmin = (ad.user_id == userId || role === 2);
-                    html += `
-                    <div class="ad-card" id="ad-${ad.id}">
-                        <div class="ad-header">
-                            <span class="status-tag" style="margin:0;">${ad.server}</span>
-                            ${ad.is_premium ? '<span style="color:var(--prem); font-size:12px; font-weight:bold;">💎 PREMIUM</span>' : ''}
-                        </div>
-                        <div class="ad-user">👤 ${ad.username}</div>
-                        <div class="ad-text" style="margin-top:10px;">${ad.text}</div>
-                        ${ad.photo ? `<img src="${ad.photo}" class="ad-img" style="margin-top:10px;">` : ''}
-                        ${isOwnerOrAdmin ? `<button class="delete-btn" onclick="deleteAd(${ad.id})">🗑 Удалить</button>` : ''}
-                    </div>`;
-                });
-                document.getElementById('home-feed').innerHTML = html;
+                const ads = await response.json();
+                // ... (дальше твой код отрисовки карточек html += ...)
+                
+                if(ads.length === 0) {
+                    feedDiv.innerHTML = '<div style="text-align: center; color: var(--hint); margin-top: 50px;">📭 Объявлений пока нет.</div>';
+                } else {
+                    feedDiv.innerHTML = html;
+                }
+
             } catch(e) {
-                // ТЕПЕРЬ ОШИБКА ВЫВЕДЕТСЯ ПРЯМО НА ЭКРАН ТЕЛЕФОНА!
-                tg.showAlert("Техническая инфа: " + e.message); 
-                document.getElementById('home-feed').innerHTML = '<div style="text-align: center; color: #ff4444; margin-top: 50px;">❌ Ошибка: ' + e.message + '</div>';
+                tg.showAlert("Критическая ошибка: " + e.message);
+                feedDiv.innerHTML = '<div style="text-align: center; color: #ff4444; margin-top: 50px;">❌ ' + e.message + '</div>';
             }
         }
 
