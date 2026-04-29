@@ -8,7 +8,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap');
         :root { --bg: #0f0c18; --card: #1a1625; --primary: #ff6b00; --text: #ffffff; --hint: #a59ab8; --prem: #ffd700; --admin: #00ff88; }
-        body { background-color: var(--bg); color: var(--text); font-family: 'Montserrat', sans-serif; margin: 0; padding: 0; overflow: hidden; }
+        body { background-color: var(--bg); color: var(--text); font-family: 'Montserrat', sans-serif; margin: 0; padding: 0; overflow-x: hidden; }
 
         /* Шапка и Баннер */
         .header { width: 100%; position: relative; background: #000; border-bottom: 2px solid var(--primary); z-index: 10; }
@@ -30,18 +30,26 @@
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; z-index: 1500; }
 
         /* Формы */
-        .photo-btn { width: 100%; height: 100px; border: 2px dashed var(--primary); border-radius: 15px; display: flex; align-items: center; justify-content: center; flex-direction: column; color: var(--primary); font-weight: bold; margin-bottom: 15px; background: rgba(255,107,0,0.05); }
+        .photo-btn { width: 100%; height: 100px; border: 2px dashed var(--primary); border-radius: 15px; display: flex; align-items: center; justify-content: center; flex-direction: column; color: var(--primary); font-weight: bold; margin-bottom: 15px; background: rgba(255,107,0,0.05); cursor: pointer; background-size: cover; background-position: center;}
         select, textarea { width: 100%; background: #2a213d; border: 1px solid #3d3159; color: white; padding: 15px; border-radius: 12px; font-family: inherit; margin-bottom: 15px; box-sizing: border-box; outline: none; }
         .btn-big { background: var(--primary); color: white; border: none; width: 100%; padding: 18px; border-radius: 12px; font-weight: 800; text-transform: uppercase; cursor: pointer; }
 
         /* Элементы списка */
         .menu-item { padding: 15px; border-radius: 10px; margin-bottom: 10px; background: var(--card); font-weight: 600; display: flex; align-items: center; gap: 10px; }
-        .status-tag { font-size: 10px; padding: 4px 8px; border-radius: 5px; background: var(--primary); color: white; text-transform: uppercase; display: inline-block; margin-top: 5px; }
+        .status-tag { font-size: 10px; padding: 4px 8px; border-radius: 5px; background: var(--primary); color: white; text-transform: uppercase; display: inline-block; margin-bottom: 5px; }
 
         /* Модалка серверов */
         .srv-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 3000; padding: 20px; box-sizing: border-box; overflow-y: auto; }
         .srv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding-bottom: 40px; }
-        .srv-item { background: var(--card); border: 1px solid #3d3159; color: white; padding: 15px; border-radius: 10px; text-align: center; font-weight: 600; }
+        .srv-item { background: var(--card); border: 1px solid #3d3159; color: white; padding: 15px; border-radius: 10px; text-align: center; font-weight: 600; cursor: pointer;}
+        
+        /* Карточка объявления */
+        .ad-card { background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid #3d3159; }
+        .ad-img { width: 100%; border-radius: 8px; margin-bottom: 10px; max-height: 200px; object-fit: cover; }
+        .ad-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;}
+        .ad-user { color: var(--hint); font-size: 12px; }
+        .ad-text { font-size: 14px; line-height: 1.4; white-space: pre-wrap;}
+        .delete-btn { background: #ff4444; color: white; border: none; padding: 8px; border-radius: 6px; width: 100%; margin-top: 10px; font-weight: bold; cursor: pointer;}
     </style>
 </head>
 <body>
@@ -54,57 +62,41 @@
             <div id="user-name" style="font-size: 22px; font-weight: 800;">Загрузка...</div>
             <div id="role-badge" class="status-tag">Игрок</div>
         </div>
-        <div class="menu-item" onclick="showPage('home')">🏠 Главная доска</div>
+        <div class="menu-item" onclick="showPage('home'); loadFeed('Все')">🏠 Главная доска</div>
         <div class="menu-item" onclick="showPage('create')">✍️ Подать объявление</div>
-        <div class="menu-item" onclick="showPage('auto')">🚀 Авто-подача</div>
-        <div class="menu-item" onclick="sendAction('view_my')">📁 Мои объявления</div>
-        <div id="adm-link" class="menu-item" style="color: var(--admin); display: none;" onclick="showPage('admin')">🛡 Админ Панель</div>
-        <div class="menu-item" style="margin-top: 30px; border: 1px solid #3d3159" onclick="sendAction('to_main')">🔙 Выход в бота</div>
+        <div class="menu-item" onclick="showPage('home'); loadFeed('Мои')">📁 Мои объявления</div>
+        <div class="menu-item" style="margin-top: 30px; border: 1px solid #3d3159" onclick="tg.close()">🔙 Закрыть приложение</div>
     </div>
 
     <div class="header">
         <div class="menu-btn" onclick="openMenu()">☰ МЕНЮ</div>
-        <img src="banner.jpg" class="banner">
+        <img src="https://i.ibb.co/C05b2P9/banner.jpg" class="banner" alt="Banner" onerror="this.style.display='none'">
     </div>
 
     <div class="main-container">
-        <!-- ГЛАВНАЯ -->
+        <!-- ГЛАВНАЯ (ЛЕНТА) -->
         <div id="page-home" class="page active">
             <button class="srv-picker-btn" onclick="openSrv()">🌍 <span id="current-srv-name">Все серверы</span></button>
-            <div id="home-feed" style="text-align: center; color: var(--hint); font-size: 14px; margin-top: 50px;">
-                Нажмите на кнопку выбора сервера выше,<br>чтобы просмотреть ленту в чате бота.
+            <div id="home-feed">
+                <!-- Здесь будут появляться карточки объявлений -->
+                <div style="text-align: center; color: var(--hint); margin-top: 50px;">Загрузка объявлений...</div>
             </div>
         </div>
 
         <!-- ПОДАЧА -->
         <div id="page-create" class="page">
             <h2 style="color: var(--primary)">НОВОЕ ОБЪЯВЛЕНИЕ</h2>
-            <div id="cd-timer" style="color:#ff4444; font-weight:800; margin-bottom:15px; display:none"></div>
-            <div class="photo-btn"><span>📷</span> ФОТО ПРИКРЕПИТЕ В БОТЕ</div>
+            
+            <!-- Скрытый инпут для выбора фото с телефона -->
+            <input type="file" id="file-input" accept="image/*" style="display: none;">
+            
+            <div class="photo-btn" id="photo-preview" onclick="document.getElementById('file-input').click()">
+                <span id="photo-text">📷 ВЫБРАТЬ ФОТО ИЗ ГАЛЕРЕИ</span>
+            </div>
+            
             <select id="f-srv"></select>
             <textarea id="f-txt" rows="6" placeholder="Описание товара..."></textarea>
             <button id="f-btn" class="btn-big" onclick="submitCreate()">ОПУБЛИКОВАТЬ</button>
-        </div>
-
-        <!-- АВТО-ПИАР -->
-        <div id="page-auto" class="page">
-            <h2 style="color: var(--prem)">АВТО-ПОДАЧА</h2>
-            <div id="auto-lock" style="display:none; text-align:center; padding:30px; background:var(--card); border-radius:15px;">
-                🔒 Функция только для <b style="color:var(--prem)">PREMIUM</b>.<br><br>
-                <button class="btn-big" onclick="sendAction('to_main')">КУПИТЬ ПРЕМКУ</button>
-            </div>
-            <div id="auto-content" style="display:none">
-                <div class="photo-btn"><span>📷</span> ФОТО ДЛЯ АВТОПИАРА</div>
-                <textarea id="a-txt" rows="6" placeholder="Текст для рассылки..."></textarea>
-                <p style="font-size:12px; color:var(--hint)">Рассылка раз в 30 минут по выбранному чату.</p>
-                <button class="btn-big" onclick="submitAuto()">ЗАПУСТИТЬ</button>
-            </div>
-        </div>
-
-        <!-- АДМИНКА -->
-        <div id="page-admin" class="page">
-            <h2 style="color: var(--admin)">МОДЕРАЦИЯ</h2>
-            <button class="btn-big" style="background:#444" onclick="sendAction('view_admin')">СПИСОК ВСЕХ ОБЪЯВЛЕНИЙ</button>
         </div>
     </div>
 
@@ -118,32 +110,27 @@
     </div>
 
     <script>
-        let tg = window.Telegram.WebApp; tg.expand();
+        let tg = window.Telegram.WebApp; 
+        tg.expand();
+        
         const urlParams = new URLSearchParams(window.location.search);
         const role = parseInt(urlParams.get('role') || '0');
-        const cd = parseInt(urlParams.get('cd') || '0');
+        const userId = tg.initDataUnsafe.user?.id || 0;
+        const userName = tg.initDataUnsafe.user?.username || tg.initDataUnsafe.user?.first_name || "Аноним";
 
-        document.getElementById('user-name').innerText = tg.initDataUnsafe.user?.first_name || "Игрок";
+        // ВАЖНО: Сюда нужно будет вставить ссылку на API твоего бота (Ngrok или IP сервера)
+        // Если бот запущен на том же компе/сервере, но нужен публичный URL, используй ngrok
+        const API_URL = "https://ТВОЙ-NGROK-URL.ngrok-free.app/api"; 
+
+        document.getElementById('user-name').innerText = userName;
         if(role === 2) {
             document.getElementById('role-badge').innerText = "Администратор";
             document.getElementById('role-badge').style.background = "#00ff88";
-            document.getElementById('adm-link').style.display = 'flex';
         } else if(role === 1) {
             document.getElementById('role-badge').innerText = "Premium";
             document.getElementById('role-badge').style.background = "#ffd700";
             document.getElementById('role-badge').style.color = "#000";
         }
-
-        if(cd > 0) {
-            const timer = document.getElementById('cd-timer');
-            timer.style.display = 'block';
-            timer.innerText = `⏳ Ожидание: ${Math.ceil(cd/60)} мин.`;
-            document.getElementById('f-btn').disabled = true;
-            document.getElementById('f-btn').style.opacity = '0.4';
-        }
-
-        if(role > 0) document.getElementById('auto-content').style.display = 'block';
-        else document.getElementById('auto-lock').style.display = 'block';
 
         const srvs = ["Vice-City","Phoenix","Tucson","Scottdale","Chandler","Brainburg","Saint Rose","Mesa","Red-Rock","Yuma","Surprise","Prescott","Glendale","Kingman","Winslow","Payson","Gilbert","Show-Low","Casa-Grande","Page","Sun-City","Queen-Creek","Sedona","Holiday","Christmas","Faraway","Bumble Bee","Mirage","Love","Drake"];
         const grid = document.getElementById('srv-grid');
@@ -159,18 +146,130 @@
         function showPage(id) { closeMenu(); document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById('page-'+id).classList.add('active'); }
         function openSrv() { document.getElementById('srv-modal').style.display = 'block'; }
         function closeSrv() { document.getElementById('srv-modal').style.display = 'none'; }
-        function selectSrv(s) { document.getElementById('current-srv-name').innerText = s; closeSrv(); tg.sendData(JSON.stringify({type:'filter', srv:s})); tg.close(); }
-        function sendAction(a) { tg.sendData(JSON.stringify({type: a})); tg.close(); }
-        function submitCreate() {
+        
+        function selectSrv(s) { 
+            document.getElementById('current-srv-name').innerText = s; 
+            closeSrv(); 
+            loadFeed(s); 
+        }
+
+        // --- ЛОГИКА ФОТОГРАФИЙ (Конвертация в Base64) ---
+        let currentPhotoBase64 = null;
+        document.getElementById('file-input').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                currentPhotoBase64 = event.target.result;
+                document.getElementById('photo-preview').style.backgroundImage = `url(${currentPhotoBase64})`;
+                document.getElementById('photo-text').style.background = 'rgba(0,0,0,0.6)';
+                document.getElementById('photo-text').style.padding = '5px';
+                document.getElementById('photo-text').style.borderRadius = '5px';
+                document.getElementById('photo-text').style.color = 'white';
+                document.getElementById('photo-text').innerText = '✅ ФОТО ВЫБРАНО (Нажми чтобы изменить)';
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // --- ЛОГИКА ЗАГРУЗКИ ЛЕНТЫ ИЗ БАЗЫ БОТА ---
+        async function loadFeed(serverFilter) {
+            document.getElementById('home-feed').innerHTML = '<div style="text-align: center; color: var(--hint); margin-top: 50px;">Загрузка...</div>';
+            try {
+                const response = await fetch(`${API_URL}/ads?server=${serverFilter}&uid=${userId}`);
+                const ads = await response.json();
+                
+                if(ads.length === 0) {
+                    document.getElementById('home-feed').innerHTML = '<div style="text-align: center; color: var(--hint); margin-top: 50px;">📭 Объявлений пока нет.</div>';
+                    return;
+                }
+
+                let html = '';
+                ads.forEach(ad => {
+                    const isOwnerOrAdmin = (ad.user_id == userId || role === 2);
+                    html += `
+                    <div class="ad-card" id="ad-${ad.id}">
+                        <div class="ad-header">
+                            <span class="status-tag" style="margin:0;">${ad.server}</span>
+                            ${ad.is_premium ? '<span style="color:var(--prem); font-size:12px; font-weight:bold;">💎 PREMIUM</span>' : ''}
+                        </div>
+                        <div class="ad-user">👤 ${ad.username}</div>
+                        <div class="ad-text" style="margin-top:10px;">${ad.text}</div>
+                        ${ad.photo ? `<img src="${ad.photo}" class="ad-img" style="margin-top:10px;">` : ''}
+                        ${isOwnerOrAdmin ? `<button class="delete-btn" onclick="deleteAd(${ad.id})">🗑 Удалить</button>` : ''}
+                    </div>`;
+                });
+                document.getElementById('home-feed').innerHTML = html;
+            } catch(e) {
+                document.getElementById('home-feed').innerHTML = '<div style="text-align: center; color: #ff4444; margin-top: 50px;">❌ Ошибка подключения к боту. Убедитесь что сервер включен.</div>';
+            }
+        }
+
+        // --- ЛОГИКА ОТПРАВКИ ОБЪЯВЛЕНИЯ В БОТА ---
+        async function submitCreate() {
             let t = document.getElementById('f-txt').value;
+            let srv = document.getElementById('f-srv').value;
+            
             if(t.length < 5) return tg.showAlert("Опишите товар!");
-            tg.sendData(JSON.stringify({type:'create', srv: document.getElementById('f-srv').value, txt: t})); tg.close();
+            
+            const btn = document.getElementById('f-btn');
+            btn.innerText = "ОТПРАВКА...";
+            btn.disabled = true;
+
+            const payload = {
+                user_id: userId,
+                username: userName,
+                server: srv,
+                text: t,
+                photo: currentPhotoBase64, // Отправляем картинку как код
+                role: role
+            };
+
+            try {
+                const res = await fetch(`${API_URL}/create`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                
+                if(res.ok) {
+                    tg.showAlert("✅ Успешно опубликовано!");
+                    document.getElementById('f-txt').value = '';
+                    currentPhotoBase64 = null;
+                    document.getElementById('photo-preview').style.backgroundImage = 'none';
+                    document.getElementById('photo-text').innerText = '📷 ВЫБРАТЬ ФОТО ИЗ ГАЛЕРЕИ';
+                    document.getElementById('photo-text').style.background = 'none';
+                    showPage('home');
+                    loadFeed('Все');
+                } else {
+                    tg.showAlert("❌ Ошибка при отправке.");
+                }
+            } catch(e) {
+                tg.showAlert("❌ Ошибка соединения с сервером.");
+            }
+            
+            btn.innerText = "ОПУБЛИКОВАТЬ";
+            btn.disabled = false;
         }
-        function submitAuto() {
-            let t = document.getElementById('a-txt').value;
-            if(t.length < 5) return tg.showAlert("Введите текст!");
-            tg.sendData(JSON.stringify({type:'auto_on', txt: t})); tg.close();
+
+        // --- ЛОГИКА УДАЛЕНИЯ ---
+        async function deleteAd(id) {
+            if(!confirm("Удалить объявление?")) return;
+            try {
+                const res = await fetch(`${API_URL}/delete`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({id: id, user_id: userId, role: role})
+                });
+                if(res.ok) {
+                    document.getElementById(`ad-${id}`).style.display = 'none';
+                }
+            } catch(e) {
+                tg.showAlert("Ошибка удаления");
+            }
         }
+
+        // При запуске сразу грузим ленту
+        loadFeed('Все');
     </script>
 </body>
 </html>
