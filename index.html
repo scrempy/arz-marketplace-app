@@ -1,89 +1,108 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARZ Ads</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ARZ Marketplace Board</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body {
-            background-color: #1a1625;
-            color: white;
-            font-family: sans-serif;
-            margin: 0; padding: 20px;
-        }
-        .search-box {
-            background: #2d273f;
-            border-radius: 10px;
-            padding: 10px;
-            margin-bottom: 20px;
-        }
-        input, textarea, select {
-            width: 100%;
-            background: #2d273f;
-            border: 1px solid #4a3f6b;
-            color: white;
-            border-radius: 5px;
-            padding: 10px;
-            margin-top: 10px;
-            box-sizing: border-box;
-        }
-        .btn-send {
-            background: #7b61ff;
-            color: white;
-            border: none;
-            width: 100%;
-            padding: 15px;
-            border-radius: 10px;
-            font-weight: bold;
-            margin-top: 20px;
-        }
-        .ad-card {
-            background: #251f35;
-            border-radius: 15px;
-            padding: 15px;
-            margin-top: 15px;
-            border-left: 4px solid #7b61ff;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap');
+        :root { --bg: #0f0c18; --card: #1a1625; --primary: #ff6b00; --text: #ffffff; --hint: #a59ab8; --premium: #ffd700; }
+        body { background-color: var(--bg); color: var(--text); font-family: 'Montserrat', sans-serif; margin: 0; padding: 0; padding-bottom: 70px; overflow-x: hidden; }
+        .hero { width: 100%; height: 220px; background: url('https://i.imgur.com/8QZqJ2s.jpeg') center/cover; border-bottom: 3px solid var(--primary); position: relative; }
+        .hero-fade { position: absolute; bottom: 0; width: 100%; height: 80px; background: linear-gradient(to top, var(--bg), transparent); }
+        .container { padding: 20px; }
+        .tab { display: none; animation: fadeIn 0.3s ease; }
+        .tab.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        h1 { font-weight: 800; font-size: 22px; color: var(--primary); text-transform: uppercase; margin: 0 0 5px 0; }
+        p { color: var(--hint); font-size: 13px; margin: 0 0 20px 0; }
+
+        .btn-main { background: linear-gradient(45deg, #ff6b00, #ff9500); color: white; border: none; width: 100%; padding: 16px; border-radius: 12px; font-weight: 800; font-size: 14px; text-transform: uppercase; cursor: pointer; box-shadow: 0 4px 15px rgba(255, 107, 0, 0.3); }
+        .btn-sub { background: var(--card); border: 1px solid #3d3159; color: white; width: 100%; padding: 14px; border-radius: 10px; margin-top: 10px; font-weight: 600; cursor: pointer; }
+
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-size: 11px; color: var(--hint); font-weight: 800; margin-bottom: 5px; text-transform: uppercase; }
+        select, textarea { width: 100%; background: var(--card); border: 1px solid #3d3159; color: white; padding: 12px; border-radius: 10px; font-family: inherit; box-sizing: border-box; outline: none; }
+        textarea { resize: none; }
+        
+        .nav { position: fixed; bottom: 0; width: 100%; background: #161222; border-top: 1px solid #2a213d; display: flex; justify-content: space-around; padding: 10px 0; }
+        .nav-item { color: var(--hint); text-align: center; font-size: 10px; font-weight: 600; text-decoration: none; width: 33%; }
+        .nav-item.active { color: var(--primary); }
+        .nav-icon { font-size: 20px; display: block; margin-bottom: 2px; }
+
+        .premium-tag { background: rgba(255, 215, 0, 0.1); border: 1px solid var(--premium); padding: 12px; border-radius: 10px; display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+        .premium-tag input { width: 18px; height: 18px; accent-color: var(--primary); }
     </style>
 </head>
 <body>
-    <div class="search-box">
-        <input type="text" placeholder="Что ищем сегодня?">
+
+    <div id="home" class="tab active">
+        <div class="hero"><div class="hero-fade"></div></div>
+        <div class="container">
+            <h1>Доска Объявлений</h1>
+            <p>Здесь можно продать любое имущество игрокам</p>
+            <button class="btn-main" onclick="openTab('create')">➕ Создать объявление</button>
+            <button class="btn-sub" onclick="sendAction('view_all')">📋 Посмотреть все (в боте)</button>
+            <button class="btn-sub" onclick="sendAction('view_my')">👤 Мои объявления</button>
+        </div>
     </div>
 
-    <h3>🚀 Подать объявление</h3>
-    <select id="server">
-        <option value="Vice-City">Vice-City</option>
-        <option value="Phoenix">Phoenix</option>
-    </select>
-    <textarea id="adText" rows="5" placeholder="Введите текст вашего объявления..."></textarea>
-    <button class="btn-send" onclick="sendAd()">ОПУБЛИКОВАТЬ</button>
+    <div id="create" class="tab">
+        <div class="container" style="padding-top: 40px;">
+            <h1>Новая запись</h1>
+            <p>Заполните детали сделки</p>
+            
+            <div class="form-group">
+                <label>Ваш сервер</label>
+                <select id="srv"></select>
+            </div>
+            
+            <div class="form-group">
+                <label>Текст объявления</label>
+                <textarea id="txt" rows="6" placeholder="Что продаете? Цена? Как связаться?"></textarea>
+            </div>
 
-    <div id="adsList">
-        <!-- Тут будут старые объявления -->
+            <div class="premium-tag">
+                <input type="checkbox" id="autopr">
+                <div style="font-size: 12px;"><b>Включить Автопиар</b><br><span style="color: var(--premium); font-size: 10px;">Только для Premium пользователей</span></div>
+            </div>
+
+            <button class="btn-main" onclick="submitAd()">Опубликовать ➔</button>
+        </div>
     </div>
+
+    <nav class="nav">
+        <div class="nav-item active" onclick="openTab('home')" id="n-home"><span class="nav-icon">🏠</span>Главная</div>
+        <div class="nav-item" onclick="openTab('create')" id="n-create"><span class="nav-icon">✍️</span>Подать</div>
+    </nav>
 
     <script>
-        let tg = window.Telegram.WebApp;
-        tg.expand(); // Раскрыть на весь экран
+        let tg = window.Telegram.WebApp; tg.expand();
+        const srvs = ["Vice-City","Phoenix","Tucson","Scottdale","Chandler","Brainburg","Saint Rose","Mesa","Red-Rock","Yuma","Surprise","Prescott","Glendale","Kingman","Winslow","Payson","Gilbert","Show-Low","Casa-Grande","Page","Sun-City","Queen-Creek","Sedona","Holiday","Christmas","Faraway","Bumble Bee","Mirage","Love","Drake"];
+        const s = document.getElementById('srv');
+        srvs.forEach(x => { let o = document.createElement('option'); o.value = x; o.text = x; s.appendChild(o); });
 
-        function sendAd() {
-            let text = document.getElementById('adText').value;
-            let server = document.getElementById('server').value;
-            
-            if (text.length < 5) {
-                alert("Слишком короткий текст!");
-                return;
-            }
+        function openTab(id) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            document.getElementById('n-'+id).classList.add('active');
+        }
 
-            let data = {
-                text: text,
-                server: server
-            };
+        function sendAction(a) { tg.sendData(JSON.stringify({type: a})); tg.close(); }
 
-            tg.sendData(JSON.stringify(data)); // Отправить данные боту
-            tg.close(); // Закрыть приложение
+        function submitAd() {
+            let t = document.getElementById('txt').value;
+            if(t.length < 5) { tg.showAlert("Напишите подробнее!"); return; }
+            tg.sendData(JSON.stringify({
+                type: 'create',
+                srv: document.getElementById('srv').value,
+                txt: t,
+                pr: document.getElementById('autopr').checked
+            }));
+            tg.close();
         }
     </script>
 </body>
