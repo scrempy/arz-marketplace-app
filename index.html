@@ -9,7 +9,13 @@
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap');
         :root { --bg: #0f0c18; --card: #1a1625; --primary: #ff6b00; --text: #ffffff; --hint: #a59ab8; --premium: #ffd700; }
         body { background-color: var(--bg); color: var(--text); font-family: 'Montserrat', sans-serif; margin: 0; padding: 0; padding-bottom: 70px; overflow-x: hidden; }
-        .hero { width: 100%; height: 220px; background: url('https://i.imgur.com/8QZqJ2s.jpeg') center/cover; border-bottom: 3px solid var(--primary); position: relative; }
+        .hero { 
+            width: 100%; 
+            height: 220px; 
+            background: url('banner.jpg') center/cover; /* Теперь ссылка идет на файл в твоем репо */
+            border-bottom: 3px solid var(--primary); 
+            position: relative; 
+        }
         .hero-fade { position: absolute; bottom: 0; width: 100%; height: 80px; background: linear-gradient(to top, var(--bg), transparent); }
         .container { padding: 20px; }
         .tab { display: none; animation: fadeIn 0.3s ease; }
