@@ -3,168 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ARZ Marketplace App</title>
+    <title>ARZ Marketplace</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap');
         :root { --bg: #0f0c18; --card: #1a1625; --primary: #ff6b00; --text: #ffffff; --hint: #a59ab8; --prem: #ffd700; --admin: #00ff88; }
         body { background-color: var(--bg); color: var(--text); font-family: 'Montserrat', sans-serif; margin: 0; padding: 0; overflow-x: hidden; }
 
-        /* Шапка с баннером */
-        .header { width: 100%; position: relative; border-bottom: 2px solid var(--primary); }
-        .banner { width: 100%; display: block; }
-        .menu-btn { position: absolute; top: 15px; left: 15px; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 10px; cursor: pointer; z-index: 10; font-size: 20px;}
+        /* ИДЕАЛЬНЫЙ БАННЕР */
+        .header { width: 100%; border-bottom: 2px solid var(--primary); background: #000; line-height: 0; }
+        .banner { width: 100%; height: auto; display: block; }
+        
+        .menu-btn { position: absolute; top: 15px; left: 15px; background: rgba(0,0,0,0.6); color: white; padding: 10px 15px; border-radius: 12px; cursor: pointer; z-index: 10; font-size: 20px; font-weight: bold; }
 
-        /* Горизонтальный выбор серверов */
+        /* ТАБЫ СЕРВЕРОВ */
         .server-tabs { display: flex; overflow-x: auto; padding: 15px; gap: 10px; background: #161222; scrollbar-width: none; }
         .server-tabs::-webkit-scrollbar { display: none; }
-        .tab-btn { background: var(--card); border: 1px solid #3d3159; color: var(--hint); padding: 8px 18px; border-radius: 20px; white-space: nowrap; font-size: 13px; font-weight: 600; cursor: pointer; }
-        .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 0 10px rgba(255,107,0,0.3); }
+        .tab-btn { background: var(--card); border: 1px solid #3d3159; color: var(--hint); padding: 8px 18px; border-radius: 20px; white-space: nowrap; font-size: 13px; font-weight: 600; }
+        .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
 
-        /* Лента объявлений */
-        .feed { padding: 15px; display: flex; flex-direction: column; gap: 15px; }
-        .ad-card { background: var(--card); border-radius: 15px; padding: 15px; border-left: 4px solid #3d3159; position: relative; }
-        .ad-card.premium { border-left-color: var(--prem); background: linear-gradient(90deg, rgba(255,215,0,0.05) 0%, var(--card) 100%); }
-        .ad-card .srv-tag { font-size: 10px; color: var(--primary); font-weight: 800; text-transform: uppercase; margin-bottom: 5px; }
-        .ad-card .user { font-size: 12px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
-        .ad-card .content { font-size: 14px; color: #eee; line-height: 1.4; }
-        .ad-card .adm-delete { position: absolute; top: 10px; right: 10px; color: #ff4444; font-size: 18px; display: none; }
-
-        /* Боковое меню */
-        .drawer { position: fixed; top: 0; left: -280px; width: 260px; height: 100%; background: #1a1625; z-index: 100; transition: 0.3s; box-shadow: 5px 0 20px rgba(0,0,0,0.5); padding: 20px; box-sizing: border-box; }
+        .container { padding: 20px; text-align: center; }
+        h1 { font-weight: 800; color: var(--primary); text-transform: uppercase; margin-bottom: 10px; }
+        
+        /* БОКОВОЕ МЕНЮ */
+        .drawer { position: fixed; top: 0; left: -280px; width: 260px; height: 100%; background: #1a1625; z-index: 100; transition: 0.3s; padding: 25px 20px; box-sizing: border-box; border-right: 1px solid var(--primary); }
         .drawer.open { left: 0; }
-        .drawer-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 99; display: none; }
-        .drawer-header { margin-bottom: 30px; border-bottom: 1px solid #3d3159; padding-bottom: 15px; }
-        .user-status { font-size: 11px; text-transform: uppercase; font-weight: 800; padding: 4px 10px; border-radius: 5px; display: inline-block; margin-top: 5px; }
-        .stat-prem { background: var(--prem); color: #000; }
-        .stat-admin { background: var(--admin); color: #000; }
-        .drawer-menu { display: flex; flex-direction: column; gap: 10px; }
-        .menu-item { padding: 12px; border-radius: 10px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px; }
-        .menu-item:active { background: rgba(255,255,255,0.05); }
+        .drawer-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 99; display: none; }
+        
+        .user-info { margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #3d3159; }
+        .status-tag { font-size: 10px; text-transform: uppercase; font-weight: 800; padding: 4px 8px; border-radius: 4px; display: inline-block; margin-top: 8px; }
+        
+        .menu-item { padding: 15px; border-radius: 12px; margin-bottom: 8px; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 12px; font-weight: 600; }
+        .menu-item:active { background: rgba(255,107,0,0.1); }
 
-        /* Окно создания */
+        /* ОКНО СОЗДАНИЯ */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 200; padding: 20px; box-sizing: border-box; }
         .modal.open { display: block; }
-        textarea, select { width: 100%; background: #2a213d; border: 1px solid #3d3159; color: white; padding: 15px; border-radius: 12px; font-family: inherit; margin-bottom: 15px; box-sizing: border-box;}
-        .btn-submit { background: var(--primary); color: white; border: none; width: 100%; padding: 16px; border-radius: 12px; font-weight: 800; text-transform: uppercase; }
+        textarea, select { width: 100%; background: #2a213d; border: 1px solid #3d3159; color: white; padding: 15px; border-radius: 12px; font-family: inherit; margin-bottom: 15px; box-sizing: border-box; }
+        .btn-submit { background: var(--primary); color: white; border: none; width: 100%; padding: 18px; border-radius: 12px; font-weight: 800; text-transform: uppercase; margin-top: 10px; }
     </style>
 </head>
 <body>
 
     <div class="drawer-overlay" id="overlay" onclick="toggleMenu()"></div>
     <div class="drawer" id="drawer">
-        <div class="drawer-header">
-            <div id="user-name" style="font-weight: 800;">Загрузка...</div>
-            <div id="user-role-badge"></div>
+        <div class="user-info">
+            <div id="u-name" style="font-size: 18px; font-weight: 800;">Загрузка...</div>
+            <div id="u-badge"></div>
         </div>
-        <div class="drawer-menu">
-            <div class="menu-item" onclick="openCreate()">✍️ Подать объявление</div>
-            <div class="menu-item" onclick="sendAction('view_my')">📁 Мои объявления</div>
-            <div class="menu-item" onclick="sendAction('to_main')">🏠 Вернуться в чат</div>
-            <div id="admin-menu" style="display:none; border-top: 1px solid #3d3159; margin-top: 10px; padding-top: 10px;">
-                <div class="menu-item" style="color: var(--admin)" onclick="sendAction('view_admin')">🛡 Админ-панель</div>
-            </div>
+        <div class="menu-item" onclick="openCreate()">✍️ Подать объявление</div>
+        <div class="menu-item" onclick="sendAction('view_my')">📁 Мои объявления</div>
+        <div class="menu-item" onclick="sendAction('to_main')">🏠 Вернуться в бота</div>
+        <div id="adm-sec" style="display:none; margin-top: 20px; border-top: 1px solid #3d3159; padding-top: 20px;">
+            <div class="menu-item" style="color: var(--admin)" onclick="sendAction('view_admin')">🛡 Админ-панель</div>
         </div>
     </div>
 
     <div class="header">
-        <div class="menu-btn" onclick="toggleMenu()">☰</div>
-        <img src="banner.jpg" class="banner" alt="ARZ">
+        <div class="menu-btn" onclick="toggleMenu()">☰ МЕНЮ</div>
+        <img src="banner.jpg" class="banner">
     </div>
 
-    <div class="server-tabs" id="server-list">
-        <div class="tab-btn active" onclick="filterServer('Все', this)">Все серверы</div>
+    <div class="server-tabs" id="tabs">
+        <div class="tab-btn active" onclick="filterSrv('Все', this)">Все серверы</div>
     </div>
 
-    <div class="feed" id="ad-feed">
-        <!-- Объявления подгрузятся из бота -->
-        <p style="text-align: center; color: var(--hint); margin-top: 20px;">Нажмите «Все серверы», чтобы обновить ленту в чате или создайте свое!</p>
+    <div class="container">
+        <h1>Market Board</h1>
+        <p style="color: var(--hint); font-size: 14px;">Выберите сервер выше или используйте меню для подачи объявления.</p>
     </div>
 
-    <!-- Модалка создания -->
-    <div class="modal" id="create-modal">
-        <h1 style="color: var(--primary); margin-bottom: 20px;">Создать объявление</h1>
-        <select id="srv-select"></select>
-        <textarea id="ad-text" rows="8" placeholder="Что продаете? Цена? Ваша связь?"></textarea>
-        
-        <div id="autopr-box" style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
-            <input type="checkbox" id="autopr-check" style="width:20px; height:20px;">
-            <label for="autopr-check" style="font-size: 13px;">Включить Автопиар (Premium)</label>
+    <div class="modal" id="modal">
+        <h1>Новое объявление</h1>
+        <select id="sel-srv"></select>
+        <textarea id="sel-txt" rows="8" placeholder="Что продаете/покупаете? Цена? Связь?"></textarea>
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px; background:#1a1625; padding:15px; border-radius:12px;">
+            <input type="checkbox" id="sel-pr" style="width:22px; height:22px;">
+            <label for="sel-pr" style="font-size:14px;">Включить Автопиар (Premium)</label>
         </div>
-
         <button class="btn-submit" onclick="submitAd()">Опубликовать ➔</button>
-        <button class="btn-submit" style="background: transparent; margin-top: 10px;" onclick="closeCreate()">Отмена</button>
+        <button class="btn-submit" style="background:transparent; border:1px solid #3d3159" onclick="closeCreate()">Отмена</button>
     </div>
 
     <script>
-        let tg = window.Telegram.WebApp;
-        tg.expand();
-        
+        let tg = window.Telegram.WebApp; tg.expand();
         const params = new URLSearchParams(window.location.search);
-        const user = tg.initDataUnsafe.user;
-        const role = params.get('role'); // 0, 1, 2
+        const role = params.get('role') || '0';
+        const user = tg.initDataUnsafe.user || {first_name: "Игрок"};
 
-        // Настройка профиля в меню
-        document.getElementById('user-name').innerText = user.first_name;
-        if(role == '2') {
-            document.getElementById('user-role-badge').innerHTML = '<span class="user-status stat-admin">Администратор</span>';
-            document.getElementById('admin-menu').style.display = 'block';
-        } else if(role == '1') {
-            document.getElementById('user-role-badge').innerHTML = '<span class="user-status stat-prem">Premium Юзер</span>';
+        document.getElementById('u-name').innerText = user.first_name;
+        const badge = document.getElementById('u-badge');
+        if(role === '2') {
+            badge.innerHTML = '<span class="status-tag" style="background:var(--admin); color:#000">Администратор</span>';
+            document.getElementById('adm-sec').style.display = 'block';
+        } else if(role === '1') {
+            badge.innerHTML = '<span class="status-tag" style="background:var(--prem); color:#000">Premium</span>';
         } else {
-            document.getElementById('user-role-badge').innerHTML = '<span class="user-status" style="background:#3d3159">Обычный игрок</span>';
-            document.getElementById('autopr-check').disabled = true;
+            badge.innerHTML = '<span class="status-tag" style="background:#3d3159">Обычный</span>';
+            document.getElementById('sel-pr').disabled = true;
         }
 
         const srvs = ["Vice-City","Phoenix","Tucson","Scottdale","Chandler","Brainburg","Saint Rose","Mesa","Red-Rock","Yuma","Surprise","Prescott","Glendale","Kingman","Winslow","Payson","Gilbert","Show-Low","Casa-Grande","Page","Sun-City","Queen-Creek","Sedona","Holiday","Christmas","Faraway","Bumble Bee","Mirage","Love","Drake"];
-        
-        const tabs = document.getElementById('server-list');
-        const select = document.getElementById('srv-select');
-
+        const tabs = document.getElementById('tabs');
+        const select = document.getElementById('sel-srv');
         srvs.forEach(s => {
-            // Вкладки
-            let b = document.createElement('div');
-            b.className = 'tab-btn';
-            b.innerText = s;
-            b.onclick = function() { filterServer(s, b); };
-            tabs.appendChild(b);
-            // Выбор в форме
-            let o = document.createElement('option');
-            o.value = s; o.text = s;
-            select.appendChild(o);
+            let b = document.createElement('div'); b.className='tab-btn'; b.innerText=s; b.onclick=()=>filterSrv(s, b); tabs.appendChild(b);
+            let o = document.createElement('option'); o.value=s; o.text=s; select.appendChild(o);
         });
 
-        function toggleMenu() {
+        function toggleMenu() { 
             document.getElementById('drawer').classList.toggle('open');
-            document.getElementById('overlay').style.display = 
-                document.getElementById('drawer').classList.contains('open') ? 'block' : 'none';
+            document.getElementById('overlay').style.display = document.getElementById('drawer').classList.contains('open') ? 'block' : 'none';
         }
+        function openCreate() { toggleMenu(); document.getElementById('modal').classList.add('open'); }
+        function closeCreate() { document.getElementById('modal').classList.remove('open'); }
 
-        function openCreate() { toggleMenu(); document.getElementById('create-modal').classList.add('open'); }
-        function closeCreate() { document.getElementById('create-modal').classList.remove('open'); }
-
-        function filterServer(name, el) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            el.classList.add('active');
-            tg.sendData(JSON.stringify({type: 'filter', srv: name}));
-            tg.close();
+        function filterSrv(s, el) {
+            document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); el.classList.add('active');
+            tg.sendData(JSON.stringify({type:'filter', srv: s})); tg.close();
         }
-
-        function sendAction(type) {
-            tg.sendData(JSON.stringify({type: type}));
-            tg.close();
-        }
-
+        function sendAction(a) { tg.sendData(JSON.stringify({type: a})); tg.close(); }
         function submitAd() {
-            let txt = document.getElementById('ad-text').value;
-            if(txt.length < 5) return tg.showAlert("Слишком короткий текст!");
-            
-            tg.sendData(JSON.stringify({
-                type: 'create',
-                srv: document.getElementById('srv-select').value,
-                txt: txt,
-                pr: document.getElementById('autopr-check').checked
-            }));
+            let t = document.getElementById('sel-txt').value;
+            if(t.length < 5) return tg.showAlert("Слишком короткий текст!");
+            tg.sendData(JSON.stringify({type:'create', srv: document.getElementById('sel-srv').value, txt: t, pr: document.getElementById('sel-pr').checked}));
             tg.close();
         }
     </script>
