@@ -35,40 +35,19 @@ window.selectSrv = (s) => {
     loadFeed(s);
 };
 
-window.updateRoleBadge = (uid, role) => {
-    const b = document.getElementById('role-badge');
-    if (!b) return;
-    if (uid === OWNER_ID) { 
-        b.innerText = "Основатель"; b.style.background = "#ff0055"; b.style.color = "#fff"; b.style.boxShadow = "0 0 10px rgba(255,0,85,0.5)";
-    }
-    else if (role === 2) { 
-        b.innerText = "Админ"; b.style.background = "#00ff88"; b.style.color = "#000"; b.style.boxShadow = "0 0 10px rgba(0,255,136,0.3)";
-    }
-    else if (role === 1) { 
-        b.innerText = "Premium"; b.style.background = "#ffd700"; b.style.color = "#000"; b.style.boxShadow = "0 0 10px rgba(255,215,0,0.3)";
-    }
-    else { 
-        b.innerText = "Игрок"; b.style.background = "#251d3a"; b.style.color = "#a0a0c0"; b.style.boxShadow = "none";
-    }
-};
-
 window.fetchUserStatus = async function() {
     if (!userId) return;
     try {
         const r = await fetch(`${API_URL}/user-status?uid=${userId}`, { headers: { "ngrok-skip-browser-warning": "true" } });
         const data = await r.json();
-        
         userName = data.username;
         document.getElementById('user-display-name').innerText = userName;
         document.getElementById('user-initials').innerText = userName.replace('@', '').charAt(0).toUpperCase();
-
         currentRole = data.role;
         updateRoleBadge(userId, currentRole);
-
         globalTimers.manualSec = (userId === OWNER_ID) ? 0 : data.manual_cd;
         globalTimers.autoActive = data.auto.active;
         globalTimers.autoSec = data.auto.next_run_sec;
-
         if (document.getElementById('a-txt') && data.auto.text && !document.getElementById('a-txt').value) {
             document.getElementById('a-txt').value = data.auto.text;
             document.getElementById('a-int').value = data.auto.interval;
@@ -79,7 +58,7 @@ window.fetchUserStatus = async function() {
 
 window.loadFeed = async function(srv) {
     const feed = document.getElementById('home-feed');
-    feed.innerHTML = '<center style="padding:40px; color:#555">Загрузка ленты...</center>';
+    feed.innerHTML = '<center style="margin-top:40px; color:#555">Загрузка...</center>';
     try {
         const r = await fetch(`${API_URL}/ads?server=${srv}&uid=${userId}`, { headers: { "ngrok-skip-browser-warning": "true" } });
         const ads = await r.json();
@@ -90,7 +69,6 @@ window.loadFeed = async function(srv) {
             const isOwnerPost = (ad.user_id === OWNER_ID);
             const isPremiumPost = (ad.is_premium === 1 || isOwnerPost);
             const isMod = (userId === OWNER_ID || currentRole === 2 || ad.user_id == userId);
-            
             let cardClass = isPremiumPost ? 'premium-ad' : '';
             let badge = isOwnerPost ? '<span class="owner-badge">👑 ОСНОВАТЕЛЬ</span>' : 
                         (isPremiumPost ? '<span style="color:#ffd700; font-size:11px; font-weight:900;">💎 PREMIUM</span>' : '');
@@ -107,27 +85,35 @@ window.loadFeed = async function(srv) {
                 </div>` : ''}
             </div>`;
         });
-        feed.innerHTML = htmlOutput || '<center style="padding:40px; color:#555">Объявлений пока нет</center>';
-    } catch (e) { feed.innerHTML = '<center style="color:#ff4466; padding:40px">Ошибка связи с сервером</center>'; }
+        feed.innerHTML = htmlOutput || '<center style="margin-top:40px; color:#555">Объявлений нет</center>';
+    } catch (e) { feed.innerHTML = '<center style="color:red; margin-top:40px">Ошибка связи</center>'; }
+};
+
+window.updateRoleBadge = (uid, role) => {
+    const b = document.getElementById('role-badge');
+    if (!b) return;
+    if (uid === OWNER_ID) { b.innerText = "Основатель"; b.style.background = "#ff0055"; }
+    else if (role === 2) { b.innerText = "Админ"; b.style.background = "#00ff88"; b.style.color = "#000"; }
+    else if (role === 1) { b.innerText = "Premium"; b.style.background = "#ffd700"; b.style.color = "#000"; }
+    else { b.innerText = "Игрок"; b.style.background = "#3d3159"; }
 };
 
 window.submitCreate = async function() {
     if (globalTimers.manualSec > 0 && userId !== OWNER_ID) return tg.showAlert("Ожидайте КД!");
     const t = document.getElementById('f-txt').value;
-    if (t.length < 5) return tg.showAlert("Слишком короткий текст!");
+    if (t.length < 5) return tg.showAlert("Текст слишком короткий!");
     const res = await fetch(`${API_URL}/create`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: userId, server: document.getElementById('f-srv').value, text: t, photo: curImg, role: currentRole })
     });
     if (res.ok) { tg.showAlert("Опубликовано!"); showPage('home'); loadFeed('Все'); }
-    else { const d = await res.json(); tg.showAlert(d.error); }
 };
 
 window.deleteAd = (id) => {
-    tg.showConfirm("Удалить это объявление?", async (c) => {
+    tg.showConfirm("Удалить объявление?", async (c) => {
         if (c) {
             await fetch(`${API_URL}/delete`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: id, user_id: userId, role: currentRole }) });
-            const el = document.getElementById(`ad-${id}`); if(el) el.remove();
+            document.getElementById(`ad-${id}`).remove();
         }
     });
 };
@@ -149,12 +135,12 @@ document.getElementById('e-save-btn').onclick = async () => {
 
 window.saveAutoPR = async (active) => {
     const i = parseInt(document.getElementById('a-int').value);
-    if (i < 30 && userId !== OWNER_ID) return tg.showAlert("Минимум 30 минут!");
+    if (i < 30 && userId !== OWNER_ID) return tg.showAlert("Минимум 30 мин!");
     await fetch(`${API_URL}/auto-pr/save`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: userId, text: document.getElementById('a-txt').value, photo: curImg, interval: i, active: active })
     });
-    tg.showAlert(active ? "Запущено!" : "Остановлено!"); fetchUserStatus();
+    tg.showAlert("Выполнено!"); fetchUserStatus();
 };
 
 const srvs = ["Vice-City", "Phoenix", "Tucson", "Scottdale", "Chandler", "Brainburg", "Saint Rose", "Mesa", "Red-Rock", "Yuma", "Surprise", "Prescott", "Glendale", "Kingman", "Winslow", "Payson", "Gilbert", "Show-Low", "Casa-Grande", "Page", "Sun-City", "Queen-Creek", "Sedona", "Holiday", "Christmas", "Faraway", "Bumble Bee", "Mirage", "Love", "Drake"];
@@ -171,7 +157,7 @@ const setupFile = (i, p) => {
         const r = new FileReader(); r.onload = (ev) => {
             curImg = ev.target.result; 
             document.getElementById(p).style.backgroundImage = `url(${curImg})`;
-            document.getElementById(p).classList.add('has-photo');
+            document.getElementById(p).style.backgroundSize = "contain";
         }; r.readAsDataURL(f);
     };
 };
@@ -183,10 +169,9 @@ setInterval(() => {
     const btn = document.getElementById('f-btn');
     if (globalTimers.manualSec > 0) {
         globalTimers.manualSec--;
-        btn.innerText = `ОЖИДАЙТЕ (${globalTimers.manualSec}с)`;
-        btn.disabled = true;
-    } else if (btn && btn.disabled) {
-        btn.innerText = "ОПУБЛИКОВАТЬ"; btn.disabled = false;
+        if(btn) btn.innerText = `ОЖИДАЙТЕ (${globalTimers.manualSec}с)`;
+    } else if (btn) {
+        btn.innerText = "ОПУБЛИКОВАТЬ";
     }
     if (globalTimers.autoActive && globalTimers.autoSec > 0) {
         globalTimers.autoSec--;
