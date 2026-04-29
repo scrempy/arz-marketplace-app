@@ -6,7 +6,8 @@ const role = parseInt(urlParams.get('role') || '0');
 
 const user = tg.initDataUnsafe.user;
 const userId = user?.id || 0;
-const userName = user?.username ? "@" + user.username : (user?.first_name || "Пользователь");
+// Начальное имя, пока сервер не ответил
+let userName = user?.username ? "@" + user.username : (user?.first_name || "Пользователь");
 
 // ВНИМАНИЕ: СЮДА НУЖНО ВСТАВЛЯТЬ АКТУАЛЬНЫЙ NGROK ПРИ ПЕРЕЗАПУСКЕ
 const API_URL = "https://old-shortly-grower.ngrok-free.dev/api"; 
@@ -103,6 +104,12 @@ async function fetchUserStatus() {
         globalTimers.manualSec = data.manual_cd;
         globalTimers.autoActive = data.auto.active;
         globalTimers.autoSec = data.auto.next_run_sec;
+        
+        // ОБНОВЛЯЕМ ЮЗЕРНЕЙМ ИЗ БАЗЫ БОТА
+        if(data.username) {
+            userName = data.username;
+            document.getElementById('user-display-name').innerText = userName;
+        }
         
         if(document.getElementById('a-txt') && data.auto.text && !document.getElementById('a-txt').value) {
             document.getElementById('a-txt').value = data.auto.text;
