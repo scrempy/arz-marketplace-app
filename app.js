@@ -1,10 +1,9 @@
-// 1. Отлов ошибок
 window.onerror = function(msg, url, lineNo, columnNo, error) {
     alert("Ошибка JS: " + msg + " (Строка: " + lineNo + ")");
     return false;
 };
 
-// Константы
+// --- КОНФИГУРАЦИЯ ---
 const OWNER_ID = 827979452;
 const API_URL = "https://old-shortly-grower.ngrok-free.dev/api"; // ТВОЙ АКТУАЛЬНЫЙ NGROK
 let tg = window.Telegram.WebApp;
@@ -20,7 +19,7 @@ let curImg = null;
 let editingId = null;
 let globalTimers = { manualSec: 0, autoSec: 0, autoActive: false };
 
-// 2. Объявление функций (прикрепляем к window, чтобы работали из HTML)
+// --- ФУНКЦИИ ИНТЕРФЕЙСА ---
 window.openMenu = () => { document.getElementById('drawer').classList.add('active'); document.getElementById('overlay').style.display='block'; };
 window.closeMenu = () => { document.getElementById('drawer').classList.remove('active'); document.getElementById('overlay').style.display='none'; };
 
@@ -39,21 +38,20 @@ window.selectSrv = (s) => {
     loadFeed(s);
 };
 
+// --- СИНХРОНИЗАЦИЯ С СЕРВЕРОМ ---
 window.fetchUserStatus = async function() {
     if (!userId) return;
     try {
         const r = await fetch(`${API_URL}/user-status?uid=${userId}`, { headers: { "ngrok-skip-browser-warning": "true" } });
         const data = await r.json();
         
-        // Синхронизация имени
         userName = data.username;
         document.getElementById('user-display-name').innerText = userName;
+        document.getElementById('user-initials').innerText = userName.replace('@', '').charAt(0).toUpperCase();
 
-        // Синхронизация роли и бейджика
         currentRole = data.role;
         updateRoleBadge(userId, currentRole);
 
-        // Таймеры
         globalTimers.manualSec = (userId === OWNER_ID) ? 0 : data.manual_cd;
         globalTimers.autoActive = data.auto.active;
         globalTimers.autoSec = data.auto.next_run_sec;
@@ -68,7 +66,7 @@ window.fetchUserStatus = async function() {
 
 window.loadFeed = async function(srv) {
     const feed = document.getElementById('home-feed');
-    feed.innerHTML = '<center style="margin-top:20px">Загрузка...</center>';
+    feed.innerHTML = '<center style="margin-top:20px; color:#555">Загрузка объявлений...</center>';
     try {
         const r = await fetch(`${API_URL}/ads?server=${srv}&uid=${userId}`, { headers: { "ngrok-skip-browser-warning": "true" } });
         const ads = await r.json();
@@ -96,32 +94,35 @@ window.loadFeed = async function(srv) {
                 </div>` : ''}
             </div>`;
         });
-        feed.innerHTML = htmlOutput || '<center style="margin-top:20px">📭 Пусто</center>';
-    } catch (e) { feed.innerHTML = '<center style="color:red">Ошибка связи</center>'; }
+        feed.innerHTML = htmlOutput || '<center style="margin-top:20px; color:#555">Объявлений пока нет</center>';
+    } catch (e) { feed.innerHTML = '<center style="color:red; margin-top:20px">Ошибка связи с сервером</center>'; }
 };
 
 window.updateRoleBadge = (uid, role) => {
     const b = document.getElementById('role-badge');
     if (!b) return;
     if (uid === OWNER_ID) { b.innerText = "Основатель"; b.style.background = "#ff0055"; }
-    else if (role === 2) { b.innerText = "Админ"; b.style.background = "#00ff88"; }
-    else if (role === 1) { b.innerText = "Premium"; b.style.background = "#ffd700"; }
-    else { b.innerText = "Игрок"; b.style.background = "var(--primary)"; }
+    else if (role === 2) { b.innerText = "Админ"; b.style.background = "#00ff88"; b.style.color = "#000"; }
+    else if (role === 1) { b.innerText = "Premium"; b.style.background = "#ffd700"; b.style.color = "#000"; }
+    else { b.innerText = "Игрок"; b.style.background = "#3d3159"; b.style.color = "#ccc"; }
 };
 
+// --- ДЕЙСТВИЯ ---
 window.submitCreate = async function() {
     if (globalTimers.manualSec > 0 && userId !== OWNER_ID) return tg.showAlert("Подождите КД!");
     const t = document.getElementById('f-txt').value;
     if (t.length < 5) return tg.showAlert("Опишите товар!");
+    
     const res = await fetch(`${API_URL}/create`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: userId, server: document.getElementById('f-srv').value, text: t, photo: curImg, role: currentRole })
     });
-    if (res.ok) { tg.showAlert("Опубликовано!"); showPage('home'); loadFeed('Все'); }
+    if (res.ok) { tg.showAlert("✅ Опубликовано!"); showPage('home'); loadFeed('Все'); }
+    else { const d = await res.json(); tg.showAlert(d.error); }
 };
 
 window.deleteAd = (id) => {
-    tg.showConfirm("Удалить?", async (c) => {
+    tg.showConfirm("Удалить это объявление?", async (c) => {
         if (c) {
             await fetch(`${API_URL}/delete`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: id, user_id: userId, role: currentRole }) });
             document.getElementById(`ad-${id}`).remove();
@@ -130,7 +131,8 @@ window.deleteAd = (id) => {
 };
 
 window.openEdit = (ad) => {
-    editingId = ad.id; document.getElementById('e-txt').value = ad.text;
+    editingId = ad.id; 
+    document.getElementById('e-txt').value = ad.text;
     document.getElementById('e-srv').value = ad.server;
     document.getElementById('edit-modal').style.display = 'block';
 };
@@ -144,13 +146,6 @@ document.getElementById('e-save-btn').onclick = async () => {
     closeEdit(); loadFeed('Все');
 };
 
-window.openAutoPR = () => {
-    showPage('auto');
-    if (currentRole === 0 && userId !== OWNER_ID) { document.getElementById('auto-lock').style.display = 'block'; return; }
-    document.getElementById('auto-content').style.display = 'block';
-    fetchUserStatus();
-};
-
 window.saveAutoPR = async (active) => {
     const i = parseInt(document.getElementById('a-int').value);
     if (i < 30 && userId !== OWNER_ID) return tg.showAlert("Мин. интервал 30 мин!");
@@ -158,10 +153,10 @@ window.saveAutoPR = async (active) => {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: userId, text: document.getElementById('a-txt').value, photo: curImg, interval: i, active: active })
     });
-    tg.showAlert("Выполнено!"); fetchUserStatus();
+    tg.showAlert(active ? "🚀 Запущено!" : "⏸ Остановлено!"); fetchUserStatus();
 };
 
-// 3. Запуск
+// --- ИНИЦИАЛИЗАЦИЯ ---
 const srvs = ["Vice-City", "Phoenix", "Tucson", "Scottdale", "Chandler", "Brainburg", "Saint Rose", "Mesa", "Red-Rock", "Yuma", "Surprise", "Prescott", "Glendale", "Kingman", "Winslow", "Payson", "Gilbert", "Show-Low", "Casa-Grande", "Page", "Sun-City", "Queen-Creek", "Sedona", "Holiday", "Christmas", "Faraway", "Bumble Bee", "Mirage", "Love", "Drake"];
 srvs.forEach(s => {
     document.getElementById('f-srv').appendChild(new Option(s, s));
@@ -174,7 +169,9 @@ const setupFile = (i, p) => {
     document.getElementById(i).onchange = (e) => {
         const f = e.target.files[0]; if (!f) return;
         const r = new FileReader(); r.onload = (ev) => {
-            curImg = ev.target.result; document.getElementById(p).style.backgroundImage = `url(${curImg})`;
+            curImg = ev.target.result; 
+            document.getElementById(p).style.backgroundImage = `url(${curImg})`;
+            document.getElementById(p).innerHTML = "";
         }; r.readAsDataURL(f);
     };
 };
@@ -183,13 +180,14 @@ setupFile('edit-file-input', 'edit-photo-preview');
 setupFile('auto-file-input', 'auto-photo-preview');
 
 setInterval(() => {
+    const btn = document.getElementById('f-btn');
     if (globalTimers.manualSec > 0) {
         globalTimers.manualSec--;
-        document.getElementById('f-btn').innerText = `ОЖИДАЙТЕ (${globalTimers.manualSec}с)`;
-        document.getElementById('f-btn').disabled = true;
-    } else {
-        document.getElementById('f-btn').innerText = "ОПУБЛИКОВАТЬ";
-        document.getElementById('f-btn').disabled = false;
+        btn.innerText = `ОЖИДАЙТЕ (${globalTimers.manualSec}с)`;
+        btn.disabled = true;
+    } else if (btn.disabled) {
+        btn.innerText = "ОПУБЛИКОВАТЬ";
+        btn.disabled = false;
     }
     if (globalTimers.autoActive && globalTimers.autoSec > 0) {
         globalTimers.autoSec--;
@@ -197,6 +195,8 @@ setInterval(() => {
     }
 }, 1000);
 
-// Инициализация при старте
-window.fetchUserStatus();
-window.loadFeed('Все');
+// Старт
+window.onload = () => {
+    fetchUserStatus();
+    loadFeed('Все');
+};
