@@ -3,340 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ARZ Market</title>
+    <title>Доска объявлений</title>
+    <!-- Подключаем Telegram Web App API -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap');
-        :root { --bg: #0f0c18; --card: #1a1625; --primary: #ff6b00; --text: #ffffff; --hint: #a59ab8; --prem: #ffd700; --admin: #00ff88; }
-        body { background-color: var(--bg); color: var(--text); font-family: 'Montserrat', sans-serif; margin: 0; padding: 0; overflow-x: hidden; }
-
-        /* ИСПРАВЛЕННЫЙ БАННЕР (не обрезается) */
-        .header { width: 100%; position: relative; background: #000; z-index: 10; }
-        .banner { width: 100%; height: auto; display: block; }
-        
-        .menu-btn { position: absolute; top: 15px; left: 15px; background: rgba(255,107,0,0.9); color: white; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: 800; font-size: 14px; z-index: 20; }
-
-        .main-container { height: calc(100vh - 50px); overflow-y: auto; padding-bottom: 50px; box-sizing: border-box; }
-        .page { display: none; padding: 20px; box-sizing: border-box; }
-        .page.active { display: block; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        .srv-picker-btn { background: var(--card); border: 2px solid var(--primary); color: white; width: 100%; padding: 15px; border-radius: 12px; font-weight: 800; margin-bottom: 20px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px; }
-
-        .drawer { position: fixed; top: 0; left: -100%; width: 85%; height: 100%; background: #161222; z-index: 2000; transition: 0.4s; padding: 40px 20px; box-sizing: border-box; border-right: 2px solid var(--primary); }
-        .drawer.active { left: 0; }
-        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; z-index: 1500; }
-
-        .photo-btn { width: 100%; height: 120px; border: 2px dashed var(--primary); border-radius: 15px; display: flex; align-items: center; justify-content: center; flex-direction: column; color: var(--primary); font-weight: bold; margin-bottom: 15px; background: rgba(255,107,0,0.05); cursor: pointer; background-size: contain; background-repeat: no-repeat; background-position: center;}
-        select, textarea, input { width: 100%; background: #2a213d; border: 1px solid #3d3159; color: white; padding: 15px; border-radius: 12px; font-family: inherit; margin-bottom: 15px; box-sizing: border-box; outline: none; }
-        .btn-big { background: var(--primary); color: white; border: none; width: 100%; padding: 18px; border-radius: 12px; font-weight: 800; text-transform: uppercase; cursor: pointer; margin-bottom: 10px;}
-
-        .menu-item { padding: 15px; border-radius: 10px; margin-bottom: 10px; background: var(--card); font-weight: 600; display: flex; align-items: center; gap: 10px; }
-        .status-tag { font-size: 10px; padding: 4px 8px; border-radius: 5px; background: var(--primary); color: white; text-transform: uppercase; display: inline-block; }
-
-        .ad-card { background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid #3d3159; }
-        .ad-img { width: 100%; height: auto; border-radius: 8px; margin-top: 10px; border: 1px solid #3d3159; display: block; max-height: 500px; object-fit: contain; background: #000; }
-        
-        .ad-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;}
-        .ad-user { color: var(--hint); font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 5px; }
-        .ad-text { font-size: 14px; line-height: 1.4; white-space: pre-wrap; margin-top: 10px;}
-        
-        .action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-        .btn-edit { background: #444; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .btn-del { background: #ff4444; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 5000; padding: 20px; box-sizing: border-box; overflow-y: auto; }
-    </style>
+    <!-- Подключаем наш файл со стилями -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="overlay" id="overlay" onclick="closeMenu()"></div>
-    
-    <div class="drawer" id="drawer">
-        <div style="margin-bottom: 30px;">
-            <div id="user-display-name" style="font-size: 18px; font-weight: 800; color: var(--primary);">Загрузка...</div>
-            <div id="role-badge" class="status-tag">Игрок</div>
-        </div>
-        <div class="menu-item" onclick="showPage('home'); loadFeed('Все')">🏠 Главная доска</div>
-        <div class="menu-item" onclick="showPage('create')">✍️ Подать объявление</div>
-        <div class="menu-item" onclick="showPage('home'); loadFeed('Мои')">📁 Мои объявления</div>
-        <div class="menu-item" onclick="openAutoPR()">🚀 Авто-пиар</div>
-        <div class="menu-item" style="margin-top: 30px; border: 1px solid #3d3159" onclick="tg.close()">🔙 Выход</div>
+<div class="overlay" id="overlay" onclick="closeMenu()"></div>
+
+<div class="drawer" id="drawer">
+    <div style="margin-bottom: 30px;">
+        <div id="user-display-name" style="font-size: 18px; font-weight: 800; color: var(--primary);">Загрузка...</div>
+        <div id="role-badge" class="status-tag">Игрок</div>
+    </div>
+    <div class="menu-item" onclick="showPage('home'); loadFeed('Все')">🏠 Главная доска</div>
+    <div class="menu-item" onclick="showPage('create')">✍️ Подать объявление</div>
+    <div class="menu-item" onclick="showPage('home'); loadFeed('Мои')">📁 Мои объявления</div>
+    <div class="menu-item" onclick="openAutoPR()">🚀 Авто-пиар</div>
+    <div class="menu-item" style="margin-top: 30px; border: 1px solid #3d3159" onclick="tg.close()">🔙 Выход</div>
+</div>
+
+<div class="header">
+    <div class="menu-btn" onclick="openMenu()">☰ МЕНЮ</div>
+    <img src="banner.jpg" class="banner" onerror="this.style.display='none'">
+</div>
+
+<div class="main-container">
+    <div id="page-home" class="page active">
+        <button class="srv-picker-btn" onclick="openSrv()">🌍 <span id="current-srv-name">Все серверы</span></button>
+        <div id="home-feed"></div>
     </div>
 
-    <div class="header">
-        <div class="menu-btn" onclick="openMenu()">☰ МЕНЮ</div>
-        <img src="banner.jpg" class="banner">
+    <div id="page-create" class="page">
+        <h2 style="color: var(--primary)">НОВОЕ ОБЪЯВЛЕНИЕ</h2>
+        <input type="file" id="file-input" accept="image/*" style="display: none;">
+        <div class="photo-btn" id="photo-preview" onclick="document.getElementById('file-input').click()">
+            <span id="photo-text">📷 ВЫБРАТЬ ФОТО</span>
+        </div>
+        <select id="f-srv"></select>
+        <textarea id="f-txt" rows="5" placeholder="Опишите ваш товар..."></textarea>
+        <button id="f-btn" class="btn-big" onclick="submitCreate()">ОПУБЛИКОВАТЬ</button>
     </div>
 
-    <div class="main-container">
-        <div id="page-home" class="page active">
-            <button class="srv-picker-btn" onclick="openSrv()">🌍 <span id="current-srv-name">Все серверы</span></button>
-            <div id="home-feed"></div>
+    <div id="page-auto" class="page">
+        <h2 style="color: var(--prem)">🚀 АВТО-ПИАР</h2>
+        <div id="auto-lock" style="display:none; text-align:center; padding:40px; background:var(--card); border-radius:15px;">
+            🔒 Только для <b>PREMIUM</b>
         </div>
-
-        <div id="page-create" class="page">
-            <h2 style="color: var(--primary)">НОВОЕ ОБЪЯВЛЕНИЕ</h2>
-            <input type="file" id="file-input" accept="image/*" style="display: none;">
-            <div class="photo-btn" id="photo-preview" onclick="document.getElementById('file-input').click()">
-                <span id="photo-text">📷 ВЫБРАТЬ ФОТО</span>
+        <div id="auto-content" style="display:none">
+            <input type="file" id="auto-file-input" accept="image/*" style="display: none;">
+            <div class="photo-btn" id="auto-photo-preview" onclick="document.getElementById('auto-file-input').click()">
+                <span>📷 ФОТО ДЛЯ ПИАРА</span>
             </div>
-            <select id="f-srv"></select>
-            <textarea id="f-txt" rows="5" placeholder="Опишите ваш товар..."></textarea>
-            <button id="f-btn" class="btn-big" onclick="submitCreate()">ОПУБЛИКОВАТЬ</button>
-        </div>
-
-        <div id="page-auto" class="page">
-            <h2 style="color: var(--prem)">🚀 АВТО-ПИАР</h2>
-            <div id="auto-lock" style="display:none; text-align:center; padding:40px; background:var(--card); border-radius:15px;">
-                🔒 Только для <b>PREMIUM</b>
-            </div>
-            <div id="auto-content" style="display:none">
-                <input type="file" id="auto-file-input" accept="image/*" style="display: none;">
-                <div class="photo-btn" id="auto-photo-preview" onclick="document.getElementById('auto-file-input').click()">
-                    <span>📷 ФОТО ДЛЯ ПИАРА</span>
-                </div>
-                <textarea id="a-txt" rows="4" placeholder="Текст рассылки..."></textarea>
-                <input type="number" id="a-int" placeholder="Интервал (мин, от 30)" min="30">
-                <div id="auto-status" style="margin-bottom:15px; font-weight: bold; color: var(--admin)"></div>
-                <button class="btn-big" onclick="saveAutoPR(true)">ЗАПУСТИТЬ</button>
-                <button class="btn-big" style="background:#ff4444" onclick="saveAutoPR(false)">ОСТАНОВИТЬ</button>
-            </div>
+            <textarea id="a-txt" rows="4" placeholder="Текст рассылки..."></textarea>
+            <input type="number" id="a-int" placeholder="Интервал (мин, от 30)" min="30">
+            <div id="auto-status" style="margin-bottom:15px; font-weight: bold; color: var(--admin)">Загрузка...</div>
+            <button class="btn-big" onclick="saveAutoPR(true)">ЗАПУСТИТЬ</button>
+            <button class="btn-big" style="background:#ff4444" onclick="saveAutoPR(false)">ОСТАНОВИТЬ</button>
         </div>
     </div>
+</div>
 
-    <!-- МОДАЛКА РЕДАКТИРОВАНИЯ -->
-    <div id="edit-modal" class="modal">
-        <h2 style="color:var(--admin)">РЕДАКТИРОВАНИЕ</h2>
-        <input type="file" id="edit-file-input" accept="image/*" style="display: none;">
-        <div class="photo-btn" id="edit-photo-preview" onclick="document.getElementById('edit-file-input').click()">
-            <span>📷 ИЗМЕНИТЬ ФОТО</span>
-        </div>
-        <select id="e-srv"></select>
-        <textarea id="e-txt" rows="6"></textarea>
-        <button class="btn-big" id="e-save-btn">СОХРАНИТЬ</button>
-        <button class="btn-big" style="background:#444" onclick="closeEdit()">ОТМЕНА</button>
+<!-- МОДАЛКА РЕДАКТИРОВАНИЯ -->
+<div id="edit-modal" class="modal">
+    <h2 style="color:var(--admin)">РЕДАКТИРОВАНИЕ</h2>
+    <input type="file" id="edit-file-input" accept="image/*" style="display: none;">
+    <div class="photo-btn" id="edit-photo-preview" onclick="document.getElementById('edit-file-input').click()">
+        <span>📷 ИЗМЕНИТЬ ФОТО</span>
     </div>
+    <select id="e-srv"></select>
+    <textarea id="e-txt" rows="6"></textarea>
+    <button class="btn-big" id="e-save-btn">СОХРАНИТЬ</button>
+    <button class="btn-big" style="background:#444" onclick="closeEdit()">ОТМЕНА</button>
+</div>
 
-    <div id="srv-modal" class="modal" style="background: rgba(0,0,0,0.9)">
-        <h2 style="color:var(--primary)">ВЫБОР СЕРВЕРА</h2>
-        <div class="srv-grid" id="srv-grid">
-            <div class="srv-item" style="grid-column: 1/3; border-color:var(--primary)" onclick="selectSrv('Все')">Все серверы</div>
-        </div>
-        <button class="btn-big" onclick="document.getElementById('srv-modal').style.display='none'">ЗАКРЫТЬ</button>
+<div id="srv-modal" class="modal" style="background: rgba(0,0,0,0.95)">
+    <h2 style="color:var(--primary)">ВЫБОР СЕРВЕРА</h2>
+    <div class="srv-grid" id="srv-grid">
+        <div class="srv-item" style="grid-column: 1/3; border-color:var(--primary)" onclick="selectSrv('Все')">Все серверы</div>
     </div>
+    <button class="btn-big" onclick="document.getElementById('srv-modal').style.display='none'">ЗАКРЫТЬ</button>
+</div>
 
-    <script>
-        let tg = window.Telegram.WebApp; tg.expand();
-        const urlParams = new URLSearchParams(window.location.search);
-        const role = parseInt(urlParams.get('role') || '0');
-        
-        const user = tg.initDataUnsafe.user;
-        const userId = user?.id || 0;
-        // Юзернейм берем отсюда для первого поста, дальше сервер сам разберется
-        const userName = user?.username ? "@" + user.username : (user?.first_name || "Пользователь");
-    
-        const API_URL = "https://old-shortly-grower.ngrok-free.dev/api"; 
-    
-        document.getElementById('user-display-name').innerText = userName;
-        if(role >= 1) {
-            document.getElementById('role-badge').innerText = (role === 2 ? "Админ" : "Premium");
-            document.getElementById('role-badge').style.background = (role === 2 ? "#00ff88" : "#ffd700");
-        }
-    
-        const srvs = ["Vice-City","Phoenix","Tucson","Scottdale","Chandler","Brainburg","Saint Rose","Mesa","Red-Rock","Yuma","Surprise","Prescott","Glendale","Kingman","Winslow","Payson","Gilbert","Show-Low","Casa-Grande","Page","Sun-City","Queen-Creek","Sedona","Holiday","Christmas","Faraway","Bumble Bee","Mirage","Love","Drake"];
-        const fSrv = document.getElementById('f-srv');
-        const eSrv = document.getElementById('e-srv');
-        const sGrid = document.getElementById('srv-grid');
-        
-        srvs.forEach(s => {
-            fSrv.appendChild(new Option(s, s));
-            eSrv.appendChild(new Option(s, s));
-            let d = document.createElement('div'); d.className='srv-item'; d.innerText=s; d.onclick=()=>selectSrv(s); sGrid.appendChild(d);
-        });
-    
-        function openMenu() { document.getElementById('drawer').classList.add('active'); document.getElementById('overlay').style.display='block'; }
-        function closeMenu() { document.getElementById('drawer').classList.remove('active'); document.getElementById('overlay').style.display='none'; }
-        function showPage(id) { closeMenu(); document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById('page-'+id).classList.add('active'); }
-        function openSrv() { document.getElementById('srv-modal').style.display='block'; }
-        function selectSrv(s) { document.getElementById('current-srv-name').innerText=s; document.getElementById('srv-modal').style.display='none'; loadFeed(s); }
-    
-        let curImg = null;
-        const setupFile = (inputId, prevId) => {
-            document.getElementById(inputId).onchange = (e) => {
-                const f = e.target.files[0]; if(!f) return;
-                const r = new FileReader(); r.onload=(ev)=>{
-                    curImg = ev.target.result;
-                    document.getElementById(prevId).style.backgroundImage = `url(${curImg})`;
-                }; r.readAsDataURL(f);
-            };
-        };
-        setupFile('file-input', 'photo-preview');
-        setupFile('edit-file-input', 'edit-photo-preview');
-        setupFile('auto-file-input', 'auto-photo-preview');
-    
-        // === СИСТЕМА ТАЙМЕРОВ ===
-        let globalTimers = { manualSec: 0, autoSec: 0, autoActive: false };
-    
-        function formatTime(sec) {
-            if (sec <= 0) return "Готово!";
-            const m = Math.floor(sec / 60);
-            const s = sec % 60;
-            return `${m}:${s < 10 ? '0' : ''}${s}`;
-        }
-    
-        setInterval(() => {
-            if(globalTimers.manualSec > 0) {
-                globalTimers.manualSec--;
-                const cBtn = document.getElementById('f-btn');
-                if(cBtn) {
-                    cBtn.innerText = `ОЖИДАЙТЕ (${formatTime(globalTimers.manualSec)})`;
-                    cBtn.disabled = true;
-                    cBtn.style.background = "#555";
-                }
-            } else {
-                const cBtn = document.getElementById('f-btn');
-                if(cBtn && cBtn.disabled) {
-                    cBtn.innerText = "ОПУБЛИКОВАТЬ";
-                    cBtn.disabled = false;
-                    cBtn.style.background = "var(--primary)";
-                }
-            }
-    
-            if(globalTimers.autoActive && globalTimers.autoSec > 0) {
-                globalTimers.autoSec--;
-                document.getElementById('auto-status').innerText = `✅ ВКЛЮЧЕН (Следующий пост через: ${formatTime(globalTimers.autoSec)})`;
-            } else if (globalTimers.autoActive && globalTimers.autoSec <= 0) {
-                document.getElementById('auto-status').innerText = `✅ ВКЛЮЧЕН (Отправка...)`;
-                setTimeout(fetchUserStatus, 5000); // Обновляем с сервера через 5 сек
-            }
-        }, 1000);
-    
-        async function fetchUserStatus() {
-            try {
-                const r = await fetch(`${API_URL}/user-status?uid=${userId}`, {headers:{"ngrok-skip-browser-warning":"true"}});
-                const data = await r.json();
-                globalTimers.manualSec = data.manual_cd;
-                globalTimers.autoActive = data.auto.active;
-                globalTimers.autoSec = data.auto.next_run_sec;
-                
-                if(document.getElementById('a-txt') && data.auto.text && !document.getElementById('a-txt').value) {
-                    document.getElementById('a-txt').value = data.auto.text;
-                    document.getElementById('a-int').value = data.auto.interval;
-                }
-                if(!data.auto.active) {
-                    document.getElementById('auto-status').innerText = "⏸ ВЫКЛЮЧЕН";
-                }
-            } catch(e) {}
-        }
-    
-        async function loadFeed(srv) {
-            fetchUserStatus(); // Обновляем таймеры при загрузке фида
-            const feed = document.getElementById('home-feed'); 
-            feed.innerHTML='<center style="margin-top:20px">Загрузка...</center>';
-            try {
-                const r = await fetch(`${API_URL}/ads?server=${srv}&uid=${userId}`, {headers:{"ngrok-skip-browser-warning":"true"}});
-                const ads = await r.json();
-                
-                if(ads.error === "BANNED") {
-                    tg.showAlert("Вы заблокированы администратором!");
-                    tg.close(); return;
-                }
-    
-                let htmlOutput = '';
-                ads.forEach(ad => {
-                    const isMod = (ad.user_id == userId || role === 2);
-                    const badge = (ad.is_premium || ad.user_id == 827979452) ? '<span style="color:var(--prem); font-size:11px; font-weight:bold;">💎 PREMIUM</span>' : '';
-                    
-                    htmlOutput += `
-                    <div class="ad-card" id="ad-${ad.id}">
-                        <div class="ad-header">
-                            <span class="status-tag">${ad.server}</span>
-                            ${badge}
-                        </div>
-                        <div class="ad-user">👤 ${ad.username}</div>
-                        <div class="ad-text">${ad.text}</div>
-                        ${ad.photo ? `<img src="${ad.photo}" class="ad-img">` : ''}
-                        ${isMod ? `
-                        <div class="action-row">
-                            <button class="btn-edit" onclick='openEdit(${JSON.stringify(ad).replace(/'/g, "&apos;")})'>📝 Изменить</button>
-                            <button class="btn-del" onclick="deleteAd(${ad.id})">🗑 Удалить</button>
-                        </div>` : ''}
-                    </div>`;
-                });
-                feed.innerHTML = htmlOutput || '<center style="margin-top:20px">📭 Пусто</center>';
-            } catch(e) { feed.innerHTML='<center style="color:red">Ошибка связи</center>'; }
-        }
-    
-        async function submitCreate() {
-            if(globalTimers.manualSec > 0) return tg.showAlert(`КД! Подождите еще ${formatTime(globalTimers.manualSec)}`);
-            const t = document.getElementById('f-txt').value;
-            if(t.length < 5) return tg.showAlert("Опишите товар!");
-            
-            const btn = document.getElementById('f-btn'); btn.disabled=true;
-            const res = await fetch(`${API_URL}/create`, {
-                method:'POST', headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({user_id:userId, username:userName, server:document.getElementById('f-srv').value, text:t, photo:curImg, role:role})
-            });
-            const data = await res.json();
-            if(res.ok) {
-                tg.showAlert("✅ Опубликовано!");
-                document.getElementById('f-txt').value=''; curImg=null;
-                document.getElementById('photo-preview').style.backgroundImage='none';
-                showPage('home'); loadFeed('Все');
-            } else tg.showAlert(data.error);
-            btn.disabled=false;
-        }
-    
-        let editingId = null;
-        function openEdit(ad) {
-            editingId = ad.id;
-            document.getElementById('e-txt').value = ad.text;
-            document.getElementById('e-srv').value = ad.server;
-            curImg = ad.photo;
-            document.getElementById('edit-photo-preview').style.backgroundImage = ad.photo ? `url(${ad.photo})` : 'none';
-            document.getElementById('edit-modal').style.display = 'block';
-        }
-        function closeEdit() { document.getElementById('edit-modal').style.display='none'; editingId=null; }
-        
-        document.getElementById('e-save-btn').onclick = async () => {
-            const res = await fetch(`${API_URL}/update`, {
-                method:'POST', headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({id:editingId, user_id:userId, username:userName, text:document.getElementById('e-txt').value, server:document.getElementById('e-srv').value, photo:curImg, role:role})
-            });
-            if(res.ok) { closeEdit(); loadFeed('Все'); tg.showAlert("Сохранено!"); }
-        };
-    
-        async function deleteAd(id) {
-            if(!confirm("Удалить?")) return;
-            const res = await fetch(`${API_URL}/delete`, {
-                method:'POST', headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({id:id, user_id:userId, role:role})
-            });
-            if(res.ok) document.getElementById(`ad-${id}`).remove();
-        }
-    
-        async function openAutoPR() {
-            showPage('auto');
-            if(role === 0) { document.getElementById('auto-lock').style.display='block'; return; }
-            document.getElementById('auto-content').style.display='block';
-            fetchUserStatus();
-        }
-    
-        async function saveAutoPR(active) {
-            const i = parseInt(document.getElementById('a-int').value);
-            if(i < 30) return tg.showAlert("Мин. интервал 30 мин!");
-            const res = await fetch(`${API_URL}/auto-pr/save`, {
-                method:'POST', headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({user_id:userId, text:document.getElementById('a-txt').value, photo:curImg, interval:i, active:active})
-            });
-            if(res.ok) { 
-                tg.showAlert(active ? "✅ Автопиар запущен!" : "⏸ Автопиар остановлен!"); 
-                fetchUserStatus(); 
-            }
-        }
-    
-        loadFeed('Все');
-    </script>
+<!-- Подключаем наш файл со скриптами в самом конце -->
+<script src="app.js"></script>
 </body>
 </html>
