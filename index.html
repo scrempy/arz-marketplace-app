@@ -131,19 +131,19 @@
         const urlParams = new URLSearchParams(window.location.search);
         const role = parseInt(urlParams.get('role') || '0');
         
-        // ЛОГИКА ОПРЕДЕЛЕНИЯ ИМЕНИ
         const user = tg.initDataUnsafe.user;
         const userId = user?.id || 0;
+        // Юзернейм берем отсюда для первого поста, дальше сервер сам разберется
         const userName = user?.username ? "@" + user.username : (user?.first_name || "Пользователь");
-
+    
         const API_URL = "https://old-shortly-grower.ngrok-free.dev/api"; 
-
+    
         document.getElementById('user-display-name').innerText = userName;
         if(role >= 1) {
             document.getElementById('role-badge').innerText = (role === 2 ? "Админ" : "Premium");
             document.getElementById('role-badge').style.background = (role === 2 ? "#00ff88" : "#ffd700");
         }
-
+    
         const srvs = ["Vice-City","Phoenix","Tucson","Scottdale","Chandler","Brainburg","Saint Rose","Mesa","Red-Rock","Yuma","Surprise","Prescott","Glendale","Kingman","Winslow","Payson","Gilbert","Show-Low","Casa-Grande","Page","Sun-City","Queen-Creek","Sedona","Holiday","Christmas","Faraway","Bumble Bee","Mirage","Love","Drake"];
         const fSrv = document.getElementById('f-srv');
         const eSrv = document.getElementById('e-srv');
@@ -154,13 +154,13 @@
             eSrv.appendChild(new Option(s, s));
             let d = document.createElement('div'); d.className='srv-item'; d.innerText=s; d.onclick=()=>selectSrv(s); sGrid.appendChild(d);
         });
-
+    
         function openMenu() { document.getElementById('drawer').classList.add('active'); document.getElementById('overlay').style.display='block'; }
         function closeMenu() { document.getElementById('drawer').classList.remove('active'); document.getElementById('overlay').style.display='none'; }
         function showPage(id) { closeMenu(); document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById('page-'+id).classList.add('active'); }
         function openSrv() { document.getElementById('srv-modal').style.display='block'; }
         function selectSrv(s) { document.getElementById('current-srv-name').innerText=s; document.getElementById('srv-modal').style.display='none'; loadFeed(s); }
-
+    
         let curImg = null;
         const setupFile = (inputId, prevId) => {
             document.getElementById(inputId).onchange = (e) => {
@@ -174,19 +174,73 @@
         setupFile('file-input', 'photo-preview');
         setupFile('edit-file-input', 'edit-photo-preview');
         setupFile('auto-file-input', 'auto-photo-preview');
-
+    
+        // === СИСТЕМА ТАЙМЕРОВ ===
+        let globalTimers = { manualSec: 0, autoSec: 0, autoActive: false };
+    
+        function formatTime(sec) {
+            if (sec <= 0) return "Готово!";
+            const m = Math.floor(sec / 60);
+            const s = sec % 60;
+            return `${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+    
+        setInterval(() => {
+            if(globalTimers.manualSec > 0) {
+                globalTimers.manualSec--;
+                const cBtn = document.getElementById('f-btn');
+                if(cBtn) {
+                    cBtn.innerText = `ОЖИДАЙТЕ (${formatTime(globalTimers.manualSec)})`;
+                    cBtn.disabled = true;
+                    cBtn.style.background = "#555";
+                }
+            } else {
+                const cBtn = document.getElementById('f-btn');
+                if(cBtn && cBtn.disabled) {
+                    cBtn.innerText = "ОПУБЛИКОВАТЬ";
+                    cBtn.disabled = false;
+                    cBtn.style.background = "var(--primary)";
+                }
+            }
+    
+            if(globalTimers.autoActive && globalTimers.autoSec > 0) {
+                globalTimers.autoSec--;
+                document.getElementById('auto-status').innerText = `✅ ВКЛЮЧЕН (Следующий пост через: ${formatTime(globalTimers.autoSec)})`;
+            } else if (globalTimers.autoActive && globalTimers.autoSec <= 0) {
+                document.getElementById('auto-status').innerText = `✅ ВКЛЮЧЕН (Отправка...)`;
+                setTimeout(fetchUserStatus, 5000); // Обновляем с сервера через 5 сек
+            }
+        }, 1000);
+    
+        async function fetchUserStatus() {
+            try {
+                const r = await fetch(`${API_URL}/user-status?uid=${userId}`, {headers:{"ngrok-skip-browser-warning":"true"}});
+                const data = await r.json();
+                globalTimers.manualSec = data.manual_cd;
+                globalTimers.autoActive = data.auto.active;
+                globalTimers.autoSec = data.auto.next_run_sec;
+                
+                if(document.getElementById('a-txt') && data.auto.text && !document.getElementById('a-txt').value) {
+                    document.getElementById('a-txt').value = data.auto.text;
+                    document.getElementById('a-int').value = data.auto.interval;
+                }
+                if(!data.auto.active) {
+                    document.getElementById('auto-status').innerText = "⏸ ВЫКЛЮЧЕН";
+                }
+            } catch(e) {}
+        }
+    
         async function loadFeed(srv) {
+            fetchUserStatus(); // Обновляем таймеры при загрузке фида
             const feed = document.getElementById('home-feed'); 
             feed.innerHTML='<center style="margin-top:20px">Загрузка...</center>';
             try {
                 const r = await fetch(`${API_URL}/ads?server=${srv}&uid=${userId}`, {headers:{"ngrok-skip-browser-warning":"true"}});
                 const ads = await r.json();
                 
-                // ПРОВЕРКА НА БАН
                 if(ads.error === "BANNED") {
                     tg.showAlert("Вы заблокированы администратором!");
-                    tg.close();
-                    return;
+                    tg.close(); return;
                 }
     
                 let htmlOutput = '';
@@ -213,10 +267,12 @@
                 feed.innerHTML = htmlOutput || '<center style="margin-top:20px">📭 Пусто</center>';
             } catch(e) { feed.innerHTML='<center style="color:red">Ошибка связи</center>'; }
         }
-
+    
         async function submitCreate() {
+            if(globalTimers.manualSec > 0) return tg.showAlert(`КД! Подождите еще ${formatTime(globalTimers.manualSec)}`);
             const t = document.getElementById('f-txt').value;
             if(t.length < 5) return tg.showAlert("Опишите товар!");
+            
             const btn = document.getElementById('f-btn'); btn.disabled=true;
             const res = await fetch(`${API_URL}/create`, {
                 method:'POST', headers:{'Content-Type':'application/json'},
@@ -231,7 +287,7 @@
             } else tg.showAlert(data.error);
             btn.disabled=false;
         }
-
+    
         let editingId = null;
         function openEdit(ad) {
             editingId = ad.id;
@@ -250,7 +306,7 @@
             });
             if(res.ok) { closeEdit(); loadFeed('Все'); tg.showAlert("Сохранено!"); }
         };
-
+    
         async function deleteAd(id) {
             if(!confirm("Удалить?")) return;
             const res = await fetch(`${API_URL}/delete`, {
@@ -259,20 +315,14 @@
             });
             if(res.ok) document.getElementById(`ad-${id}`).remove();
         }
-
+    
         async function openAutoPR() {
             showPage('auto');
             if(role === 0) { document.getElementById('auto-lock').style.display='block'; return; }
             document.getElementById('auto-content').style.display='block';
-            const r = await fetch(`${API_URL}/auto-pr/get?uid=${userId}`);
-            const d = await r.json();
-            if(d) {
-                document.getElementById('a-txt').value = d.text || '';
-                document.getElementById('a-int').value = d.interval || 30;
-                document.getElementById('auto-status').innerText = d.active ? "✅ ВКЛЮЧЕН" : "⏸ ВЫКЛЮЧЕН";
-            }
+            fetchUserStatus();
         }
-
+    
         async function saveAutoPR(active) {
             const i = parseInt(document.getElementById('a-int').value);
             if(i < 30) return tg.showAlert("Мин. интервал 30 мин!");
@@ -280,9 +330,12 @@
                 method:'POST', headers:{'Content-Type':'application/json'},
                 body: JSON.stringify({user_id:userId, text:document.getElementById('a-txt').value, photo:curImg, interval:i, active:active})
             });
-            if(res.ok) { tg.showAlert("Выполнено!"); openAutoPR(); }
+            if(res.ok) { 
+                tg.showAlert(active ? "✅ Автопиар запущен!" : "⏸ Автопиар остановлен!"); 
+                fetchUserStatus(); 
+            }
         }
-
+    
         loadFeed('Все');
     </script>
 </body>
