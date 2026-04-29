@@ -175,7 +175,12 @@
         async function loadFeed(serverFilter) {
             document.getElementById('home-feed').innerHTML = '<div style="text-align: center; color: var(--hint); margin-top: 50px;">Загрузка...</div>';
             try {
-                const response = await fetch(`${API_URL}/ads?server=${serverFilter}&uid=${userId}`);
+                const response = await fetch(`${API_URL}/ads?server=${serverFilter}&uid=${userId}`, {
+                    method: 'GET',
+                    headers: {
+                        "ngrok-skip-browser-warning": "69420" // МАГИЧЕСКАЯ СТРОЧКА: Отключает экран предупреждения Ngrok
+                    }
+                });
                 const ads = await response.json();
                 
                 if(ads.length === 0) {
@@ -200,6 +205,7 @@
                 });
                 document.getElementById('home-feed').innerHTML = html;
             } catch(e) {
+                console.error(e);
                 document.getElementById('home-feed').innerHTML = '<div style="text-align: center; color: #ff4444; margin-top: 50px;">❌ Ошибка подключения к боту. Убедитесь что сервер включен.</div>';
             }
         }
