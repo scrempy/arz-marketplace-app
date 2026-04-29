@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARZ Ads</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            background-color: #1a1625;
+            color: white;
+            font-family: sans-serif;
+            margin: 0; padding: 20px;
+        }
+        .search-box {
+            background: #2d273f;
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+        input, textarea, select {
+            width: 100%;
+            background: #2d273f;
+            border: 1px solid #4a3f6b;
+            color: white;
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 10px;
+            box-sizing: border-box;
+        }
+        .btn-send {
+            background: #7b61ff;
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        .ad-card {
+            background: #251f35;
+            border-radius: 15px;
+            padding: 15px;
+            margin-top: 15px;
+            border-left: 4px solid #7b61ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="search-box">
+        <input type="text" placeholder="Что ищем сегодня?">
+    </div>
+
+    <h3>🚀 Подать объявление</h3>
+    <select id="server">
+        <option value="Vice-City">Vice-City</option>
+        <option value="Phoenix">Phoenix</option>
+    </select>
+    <textarea id="adText" rows="5" placeholder="Введите текст вашего объявления..."></textarea>
+    <button class="btn-send" onclick="sendAd()">ОПУБЛИКОВАТЬ</button>
+
+    <div id="adsList">
+        <!-- Тут будут старые объявления -->
+    </div>
+
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.expand(); // Раскрыть на весь экран
+
+        function sendAd() {
+            let text = document.getElementById('adText').value;
+            let server = document.getElementById('server').value;
+            
+            if (text.length < 5) {
+                alert("Слишком короткий текст!");
+                return;
+            }
+
+            let data = {
+                text: text,
+                server: server
+            };
+
+            tg.sendData(JSON.stringify(data)); // Отправить данные боту
+            tg.close(); // Закрыть приложение
+        }
+    </script>
+</body>
+</html>
