@@ -3,58 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ARZ Marketplace</title>
+    <title>ARZ Market</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap');
         :root { --bg: #0f0c18; --card: #1a1625; --primary: #ff6b00; --text: #ffffff; --hint: #a59ab8; --prem: #ffd700; --admin: #00ff88; }
         body { background-color: var(--bg); color: var(--text); font-family: 'Montserrat', sans-serif; margin: 0; padding: 0; overflow: hidden; }
 
-        /* Боковое меню */
-        .drawer { position: fixed; top: 0; left: -100%; width: 80%; height: 100%; background: #161222; z-index: 1000; transition: 0.4s; padding: 30px 20px; box-sizing: border-box; border-right: 2px solid var(--primary); }
-        .drawer.active { left: 0; }
-        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; z-index: 999; }
-        
-        /* Шапка */
-        .header { width: 100%; position: relative; background: #000; line-height: 0; border-bottom: 2px solid var(--primary); }
-        .banner { width: 100%; height: auto; display: block; }
-        .menu-btn { position: absolute; top: 15px; left: 15px; background: rgba(255,107,0,0.8); color: white; padding: 10px; border-radius: 8px; cursor: pointer; line-height: 1; font-weight: bold; }
+        /* Шапка и Баннер */
+        .header { width: 100%; position: relative; background: #000; border-bottom: 2px solid var(--primary); z-index: 10; }
+        .banner { width: 100%; height: auto; display: block; max-height: 250px; object-fit: cover; }
+        .menu-btn { position: absolute; top: 15px; left: 15px; background: rgba(255,107,0,0.9); color: white; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: 800; font-size: 14px; z-index: 20; }
 
-        /* Контент */
-        .content-area { height: calc(100vh - 200px); overflow-y: auto; padding: 20px; box-sizing: border-box; }
-        .page { display: none; }
+        /* Контентная область */
+        .main-container { height: calc(100vh - 50px); overflow-y: auto; padding-bottom: 50px; box-sizing: border-box; }
+        .page { display: none; padding: 20px; box-sizing: border-box; }
         .page.active { display: block; animation: fadeIn 0.3s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* Форма подачи */
-        .img-placeholder { width: 100%; height: 120px; background: #2a213d; border: 2px dashed var(--primary); border-radius: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 15px; color: var(--primary); font-weight: bold; font-size: 12px; }
-        .img-placeholder span { font-size: 30px; margin-bottom: 5px; }
-        
+        /* Кнопка выбора сервера */
+        .srv-picker-btn { background: var(--card); border: 2px solid var(--primary); color: white; width: 100%; padding: 15px; border-radius: 12px; font-weight: 800; margin-bottom: 20px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px; }
+
+        /* Боковое меню */
+        .drawer { position: fixed; top: 0; left: -100%; width: 85%; height: 100%; background: #161222; z-index: 2000; transition: 0.4s; padding: 40px 20px; box-sizing: border-box; border-right: 2px solid var(--primary); }
+        .drawer.active { left: 0; }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; z-index: 1500; }
+
+        /* Формы */
+        .photo-btn { width: 100%; height: 100px; border: 2px dashed var(--primary); border-radius: 15px; display: flex; align-items: center; justify-content: center; flex-direction: column; color: var(--primary); font-weight: bold; margin-bottom: 15px; background: rgba(255,107,0,0.05); }
         select, textarea { width: 100%; background: #2a213d; border: 1px solid #3d3159; color: white; padding: 15px; border-radius: 12px; font-family: inherit; margin-bottom: 15px; box-sizing: border-box; outline: none; }
-        .btn-send { background: var(--primary); color: white; border: none; width: 100%; padding: 16px; border-radius: 12px; font-weight: 800; text-transform: uppercase; box-shadow: 0 4px 15px rgba(255,107,0,0.3); }
+        .btn-big { background: var(--primary); color: white; border: none; width: 100%; padding: 18px; border-radius: 12px; font-weight: 800; text-transform: uppercase; cursor: pointer; }
 
-        /* Элементы меню */
-        .menu-item { padding: 15px; border-radius: 10px; margin-bottom: 10px; background: var(--card); cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 10px; }
-        .menu-item.locked { opacity: 0.5; }
-        .status-badge { font-size: 10px; padding: 4px 8px; border-radius: 5px; background: var(--primary); text-transform: uppercase; margin-top: 5px; display: inline-block; }
+        /* Элементы списка */
+        .menu-item { padding: 15px; border-radius: 10px; margin-bottom: 10px; background: var(--card); font-weight: 600; display: flex; align-items: center; gap: 10px; }
+        .status-tag { font-size: 10px; padding: 4px 8px; border-radius: 5px; background: var(--primary); color: white; text-transform: uppercase; display: inline-block; margin-top: 5px; }
 
-        .cooldown-text { color: #ff4444; font-size: 13px; font-weight: bold; margin-bottom: 15px; text-align: center; }
+        /* Модалка серверов */
+        .srv-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 3000; padding: 20px; box-sizing: border-box; overflow-y: auto; }
+        .srv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding-bottom: 40px; }
+        .srv-item { background: var(--card); border: 1px solid #3d3159; color: white; padding: 15px; border-radius: 10px; text-align: center; font-weight: 600; }
     </style>
 </head>
 <body>
 
     <div class="overlay" id="overlay" onclick="closeMenu()"></div>
+    
+    <!-- DRAWER -->
     <div class="drawer" id="drawer">
         <div style="margin-bottom: 30px;">
-            <div id="user-name" style="font-size: 20px; font-weight: 800;">Загрузка...</div>
-            <div id="role-badge" class="status-badge">Игрок</div>
+            <div id="user-name" style="font-size: 22px; font-weight: 800;">Загрузка...</div>
+            <div id="role-badge" class="status-tag">Игрок</div>
         </div>
-        <div class="menu-item" onclick="showPage('home')">🏠 Главная</div>
+        <div class="menu-item" onclick="showPage('home')">🏠 Главная доска</div>
         <div class="menu-item" onclick="showPage('create')">✍️ Подать объявление</div>
-        <div id="btn-auto" class="menu-item" onclick="showPage('auto')">🚀 Авто-подача</div>
+        <div class="menu-item" onclick="showPage('auto')">🚀 Авто-подача</div>
         <div class="menu-item" onclick="sendAction('view_my')">📁 Мои объявления</div>
-        <div id="adm-link" class="menu-item" style="color: var(--admin); display: none;" onclick="showPage('admin')">🛡 Админ Центр</div>
-        <div class="menu-item" style="margin-top: 20px; border: 1px solid #3d3159" onclick="sendAction('to_main')">🔙 В бота</div>
+        <div id="adm-link" class="menu-item" style="color: var(--admin); display: none;" onclick="showPage('admin')">🛡 Админ Панель</div>
+        <div class="menu-item" style="margin-top: 30px; border: 1px solid #3d3159" onclick="sendAction('to_main')">🔙 Выход в бота</div>
     </div>
 
     <div class="header">
@@ -62,53 +67,62 @@
         <img src="banner.jpg" class="banner">
     </div>
 
-    <div class="content-area">
+    <div class="main-container">
         <!-- ГЛАВНАЯ -->
         <div id="page-home" class="page active">
-            <h2 style="color: var(--primary)">СЕРВЕРЫ</h2>
-            <div id="server-buttons" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
+            <button class="srv-picker-btn" onclick="openSrv()">🌍 <span id="current-srv-name">Все серверы</span></button>
+            <div id="home-feed" style="text-align: center; color: var(--hint); font-size: 14px; margin-top: 50px;">
+                Нажмите на кнопку выбора сервера выше,<br>чтобы просмотреть ленту в чате бота.
+            </div>
         </div>
 
         <!-- ПОДАЧА -->
         <div id="page-create" class="page">
             <h2 style="color: var(--primary)">НОВОЕ ОБЪЯВЛЕНИЕ</h2>
-            <div id="cd-box" class="cooldown-text" style="display:none"></div>
-            <div class="img-placeholder"><span>📷</span> ФОТО ПРИКРЕПИТЕ В БОТЕ</div>
+            <div id="cd-timer" style="color:#ff4444; font-weight:800; margin-bottom:15px; display:none"></div>
+            <div class="photo-btn"><span>📷</span> ФОТО ПРИКРЕПИТЕ В БОТЕ</div>
             <select id="f-srv"></select>
-            <textarea id="f-txt" rows="5" placeholder="Опишите ваш товар..."></textarea>
-            <button id="f-btn" class="btn-send" onclick="submitCreate()">ОПУБЛИКОВАТЬ ➔</button>
+            <textarea id="f-txt" rows="6" placeholder="Описание товара..."></textarea>
+            <button id="f-btn" class="btn-big" onclick="submitCreate()">ОПУБЛИКОВАТЬ</button>
         </div>
 
         <!-- АВТО-ПИАР -->
         <div id="page-auto" class="page">
             <h2 style="color: var(--prem)">АВТО-ПОДАЧА</h2>
-            <div id="auto-lock" style="display:none; text-align:center; padding:20px; background:rgba(255,255,255,0.05); border-radius:15px;">
-                🔒 Эта функция доступна только для <b style="color:var(--prem)">PREMIUM</b> пользователей.<br><br>
-                <button class="btn-send" onclick="sendAction('to_main')">КУПИТЬ PREMIUM</button>
+            <div id="auto-lock" style="display:none; text-align:center; padding:30px; background:var(--card); border-radius:15px;">
+                🔒 Функция только для <b style="color:var(--prem)">PREMIUM</b>.<br><br>
+                <button class="btn-big" onclick="sendAction('to_main')">КУПИТЬ ПРЕМКУ</button>
             </div>
             <div id="auto-content" style="display:none">
-                <div class="img-placeholder"><span>📷</span> ФОТО ПРИКРЕПИТЕ В БОТЕ</div>
-                <textarea id="a-txt" rows="5" placeholder="Текст для автоматической рассылки..."></textarea>
-                <p style="font-size:12px; color:var(--hint)">Будет отправляться раз в 30 минут автоматически.</p>
-                <button class="btn-send" onclick="submitAuto()">ВКЛЮЧИТЬ АВТОПИАР</button>
+                <div class="photo-btn"><span>📷</span> ФОТО ДЛЯ АВТОПИАРА</div>
+                <textarea id="a-txt" rows="6" placeholder="Текст для рассылки..."></textarea>
+                <p style="font-size:12px; color:var(--hint)">Рассылка раз в 30 минут по выбранному чату.</p>
+                <button class="btn-big" onclick="submitAuto()">ЗАПУСТИТЬ</button>
             </div>
         </div>
 
-        <!-- АДМИН ПАНЕЛЬ -->
+        <!-- АДМИНКА -->
         <div id="page-admin" class="page">
-            <h2 style="color: var(--admin)">АДМИН ЦЕНТР</h2>
-            <p>Здесь вы можете управлять всеми объявлениями на доске.</p>
-            <button class="btn-send" style="background:#444" onclick="sendAction('view_admin')">ОТКРЫТЬ СПИСОК МОДЕРАЦИИ</button>
+            <h2 style="color: var(--admin)">МОДЕРАЦИЯ</h2>
+            <button class="btn-big" style="background:#444" onclick="sendAction('view_admin')">СПИСОК ВСЕХ ОБЪЯВЛЕНИЙ</button>
         </div>
+    </div>
+
+    <!-- СЕЛЕКТОР СЕРВЕРОВ -->
+    <div id="srv-modal" class="srv-modal">
+        <h1 style="color:var(--primary)">ВЫБОР СЕРВЕРА</h1>
+        <div class="srv-grid" id="srv-grid">
+            <div class="srv-item" style="grid-column: 1 / 3; border-color: var(--primary)" onclick="selectSrv('Все')">Все серверы</div>
+        </div>
+        <button class="btn-big" onclick="closeSrv()">ОТМЕНА</button>
     </div>
 
     <script>
         let tg = window.Telegram.WebApp; tg.expand();
         const urlParams = new URLSearchParams(window.location.search);
         const role = parseInt(urlParams.get('role') || '0');
-        const cd = parseInt(urlParams.get('cd') || '0'); // секунд осталось КД
+        const cd = parseInt(urlParams.get('cd') || '0');
 
-        // Прогрузка данных юзера
         document.getElementById('user-name').innerText = tg.initDataUnsafe.user?.first_name || "Игрок";
         if(role === 2) {
             document.getElementById('role-badge').innerText = "Администратор";
@@ -120,53 +134,42 @@
             document.getElementById('role-badge').style.color = "#000";
         }
 
-        // КД логика
         if(cd > 0) {
-            document.getElementById('cd-box').style.display = 'block';
-            document.getElementById('cd-box').innerText = `КД: ${Math.ceil(cd/60)} мин. до след. поста`;
+            const timer = document.getElementById('cd-timer');
+            timer.style.display = 'block';
+            timer.innerText = `⏳ Ожидание: ${Math.ceil(cd/60)} мин.`;
             document.getElementById('f-btn').disabled = true;
-            document.getElementById('f-btn').style.opacity = '0.5';
+            document.getElementById('f-btn').style.opacity = '0.4';
         }
 
-        // Автопиар логика
         if(role > 0) document.getElementById('auto-content').style.display = 'block';
         else document.getElementById('auto-lock').style.display = 'block';
 
-        // Генерация кнопок серверов
         const srvs = ["Vice-City","Phoenix","Tucson","Scottdale","Chandler","Brainburg","Saint Rose","Mesa","Red-Rock","Yuma","Surprise","Prescott","Glendale","Kingman","Winslow","Payson","Gilbert","Show-Low","Casa-Grande","Page","Sun-City","Queen-Creek","Sedona","Holiday","Christmas","Faraway","Bumble Bee","Mirage","Love","Drake"];
-        const grid = document.getElementById('server-buttons');
+        const grid = document.getElementById('srv-grid');
         const select = document.getElementById('f-srv');
         srvs.forEach(s => {
-            let b = document.createElement('button');
-            b.style = "background:var(--card); border:1px solid #3d3159; color:white; padding:12px; border-radius:10px; font-weight:600";
-            b.innerText = s; b.onclick = () => { tg.sendData(JSON.stringify({type:'filter', srv:s})); tg.close(); };
-            grid.appendChild(b);
+            let d = document.createElement('div'); d.className = 'srv-item'; d.innerText = s;
+            d.onclick = () => selectSrv(s); grid.appendChild(d);
             let o = document.createElement('option'); o.value=s; o.text=s; select.appendChild(o);
         });
 
         function openMenu() { document.getElementById('drawer').classList.add('active'); document.getElementById('overlay').style.display = 'block'; }
         function closeMenu() { document.getElementById('drawer').classList.remove('active'); document.getElementById('overlay').style.display = 'none'; }
-
-        function showPage(id) {
-            closeMenu();
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById('page-' + id).classList.add('active');
-        }
-
+        function showPage(id) { closeMenu(); document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById('page-'+id).classList.add('active'); }
+        function openSrv() { document.getElementById('srv-modal').style.display = 'block'; }
+        function closeSrv() { document.getElementById('srv-modal').style.display = 'none'; }
+        function selectSrv(s) { document.getElementById('current-srv-name').innerText = s; closeSrv(); tg.sendData(JSON.stringify({type:'filter', srv:s})); tg.close(); }
         function sendAction(a) { tg.sendData(JSON.stringify({type: a})); tg.close(); }
-
         function submitCreate() {
             let t = document.getElementById('f-txt').value;
-            if(t.length < 5) return tg.showAlert("Слишком короткий текст!");
-            tg.sendData(JSON.stringify({type:'create', srv: document.getElementById('f-srv').value, txt: t}));
-            tg.close();
+            if(t.length < 5) return tg.showAlert("Опишите товар!");
+            tg.sendData(JSON.stringify({type:'create', srv: document.getElementById('f-srv').value, txt: t})); tg.close();
         }
-
         function submitAuto() {
             let t = document.getElementById('a-txt').value;
-            if(t.length < 5) return tg.showAlert("Введите текст для рассылки!");
-            tg.sendData(JSON.stringify({type:'auto_on', txt: t}));
-            tg.close();
+            if(t.length < 5) return tg.showAlert("Введите текст!");
+            tg.sendData(JSON.stringify({type:'auto_on', txt: t})); tg.close();
         }
     </script>
 </body>
