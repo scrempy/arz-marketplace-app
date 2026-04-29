@@ -158,7 +158,15 @@
         document.getElementById('file-input').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if(!file) return;
+
+            // Если файл больше 10 Мб, ругаемся
+            if (file.size > 10 * 1024 * 1024) {
+                tg.showAlert("❌ Фото слишком тяжелое! Выберите файл до 10 Мб.");
+                return;
+            }
+
             const reader = new FileReader();
+            
             reader.onload = function(event) {
                 currentPhotoBase64 = event.target.result;
                 document.getElementById('photo-preview').style.backgroundImage = `url(${currentPhotoBase64})`;
