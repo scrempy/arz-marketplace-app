@@ -141,3 +141,23 @@ html, body {
 .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f0c1b; z-index: 5000; padding: 20px; overflow-y: auto; }
 .srv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .srv-item { background: var(--card); padding: 15px; text-align: center; border-radius: 12px; border: 1px solid #3d3159; font-weight: 600; }
+
+/* --- ИСПРАВЛЕНИЕ КЛИКОВ ПО КНОПКАМ --- */
+
+/* Делаем золотую рамку и блики проницаемыми (чтобы клики проходили сквозь них) */
+.premium-ad::before, 
+.premium-ad::after {
+    pointer-events: none !important;
+}
+
+/* Поднимаем кнопки на самый верхний слой */
+.action-row {
+    position: relative !important;
+    z-index: 10 !important;
+}
+
+.btn-edit, .btn-del {
+    position: relative !important;
+    z-index: 10 !important;
+    cursor: pointer !important;
+}
