@@ -99,17 +99,23 @@ window.saveEdit = async function() {
 };
 
 window.deleteAd = function(id) {
-    tg.showConfirm("Удалить это объявление?", async function(ok) {
-        if (ok) {
+    tg.showConfirm("Удалить это объявление?", async function(confirm) {
+        if (confirm) {
             try {
-                await fetch(`${API_URL}/delete`, {
+                const response = await fetch(`${API_URL}/delete`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id: id, user_id: userId, role: currentRole })
                 });
-                let el = document.getElementById(`ad-${id}`);
-                if (el) el.remove();
-            } catch (e) { alert("Ошибка при удалении"); }
+                if (response.ok) {
+                    const card = document.getElementById(`ad-${id}`);
+                    if (card) card.remove();
+                } else {
+                    alert("Ошибка: Сервер не смог удалить.");
+                }
+            } catch (e) { 
+                alert("Ошибка при связи с сервером"); 
+            }
         }
     });
 };
